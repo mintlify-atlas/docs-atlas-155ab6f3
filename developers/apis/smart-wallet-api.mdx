@@ -1,0 +1,187 @@
+---
+title: "Smart Wallet API: ERC-4337 smart account management"
+description: "Create and manage non-custodial ERC-4337 smart contract wallets on Fuse. Authenticate users, relay gasless transactions, and retrieve wallet history."
+---
+
+The Smart Wallet API provides a Wallets-as-a-Service (WaaS) layer for your cross-platform applications. It lets you authenticate users via their Externally Owned Accounts (EOAs), deploy upgradable ERC-4337 smart contract wallets on the Fuse network, and relay gasless transactions through the Fuse relayer service. Each wallet is non-custodial — the owner signs messages and the relayer submits them on-chain, so users pay no gas directly.
+
+## Base URL
+
+```
+https://api.fuse.io/api/v2/smart-wallets
+```
+
+## Authentication
+
+<Steps>
+  <Step title="Add your public API key">
+    Include your public API key as a query parameter on every request:
+
+    ```
+    ?apiKey=YOUR_PUBLIC_API_KEY
+    ```
+  </Step>
+  <Step title="Authenticate the user (POST /auth)">
+    Call the `/auth` endpoint with the user's signed EIP-191 message to receive a short-lived JWT.
+  </Step>
+  <Step title="Use the JWT for protected endpoints">
+    Pass the JWT as a `Bearer` token in the `Authorization` header for endpoints that require user authentication (such as `/actions`).
+  </Step>
+</Steps>
+
+## Endpoints
+
+### POST /auth — Authenticate user
+
+Authenticate a user by verifying a signed EIP-191 message. Returns a JWT that authorizes subsequent requests on behalf of that user.
+
+**Endpoint:** `POST https://api.fuse.io/api/v2/smart-wallets/auth?apiKey={apiKey}`
+
+#### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Request body
+
+<ParamField body="hash" type="string" required>
+  The hash of the message the user signed.
+</ParamField>
+
+<ParamField body="signature" type="string" required>
+  The EIP-191 signature produced by the user's EOA private key.
+</ParamField>
+
+<ParamField body="ownerAddress" type="string" required>
+  The EOA address that produced the signature.
+</ParamField>
+
+<ParamField body="smartWalletAddress" type="string">
+  The user's existing smart contract wallet address, if one has already been deployed.
+</ParamField>
+
+#### Response
+
+<ResponseField name="jwt" type="string">
+  A short-lived JWT. Include this as `Authorization: Bearer <jwt>` on subsequent requests.
+</ResponseField>
+
+#### Example
+
+```bash
+curl -X POST "https://api.fuse.io/api/v2/smart-wallets/auth?apiKey=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hash": "0xabc123...",
+    "signature": "0xdef456...",
+    "ownerAddress": "0x1234567890abcdef1234567890abcdef12345678",
+    "smartWalletAddress": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"
+  }'
+```
+
+```json
+{
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+---
+
+### GET /actions — Get wallet actions
+
+Retrieve the transaction history (sent and received token transfers) for the authenticated user's smart wallet. Requires a valid JWT from the `/auth` endpoint.
+
+**Endpoint:** `GET https://api.fuse.io/api/v2/smart-wallets/actions?apiKey={apiKey}`
+
+#### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Number of action items to return per page.
+</ParamField>
+
+<ParamField query="tokenAddress" type="string">
+  Filter results to actions involving a specific token contract address.
+</ParamField>
+
+#### Response
+
+<ResponseField name="docs" type="object[]">
+  Array of wallet action objects.
+
+  <Expandable title="Action item properties">
+    <ResponseField name="_id" type="string">
+      Unique identifier for this action record.
+    </ResponseField>
+    <ResponseField name="walletAddress" type="string">
+      The smart wallet address this action belongs to.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      A human-readable name for the action type.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Execution status (e.g., `confirmed`, `pending`, `failed`).
+    </ResponseField>
+    <ResponseField name="userOpHash" type="string">
+      The ERC-4337 UserOperation hash.
+    </ResponseField>
+    <ResponseField name="txHash" type="string">
+      The on-chain transaction hash once the UserOperation is mined.
+    </ResponseField>
+    <ResponseField name="sent" type="object[]">
+      Token transfers sent by this wallet in this action.
+    </ResponseField>
+    <ResponseField name="received" type="object[]">
+      Token transfers received by this wallet in this action.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Example
+
+```bash
+curl -X GET "https://api.fuse.io/api/v2/smart-wallets/actions?apiKey=YOUR_API_KEY&page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_JWT"
+```
+
+```json
+{
+  "docs": [
+    {
+      "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
+      "walletAddress": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+      "name": "tokenTransfer",
+      "status": "confirmed",
+      "userOpHash": "0x111aaa...",
+      "txHash": "0x222bbb...",
+      "sent": [
+        {
+          "name": "Fuse Token",
+          "symbol": "FUSE",
+          "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+          "decimals": 18,
+          "value": "1000000000000000000",
+          "type": "native"
+        }
+      ],
+      "received": []
+    }
+  ]
+}
+```
+
+## Error responses
+
+| Status | Description |
+|---|---|
+| `400` | Bad request — malformed body or missing required fields |
+| `401` | Unauthorized — JWT is missing or has expired |
+| `403` | Forbidden — invalid or missing `apiKey` |

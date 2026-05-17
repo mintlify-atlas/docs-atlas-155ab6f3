@@ -1,0 +1,340 @@
+---
+title: "Web3 developer tools for building on Fuse"
+description: "Set up Hardhat, Remix, Thirdweb, Grove, and WalletConnect to compile, deploy, and interact with smart contracts on the Fuse Network."
+---
+
+Fuse Network is EVM-compatible, so the full suite of Ethereum developer tooling works out of the box. This page covers the most common tools used to deploy and interact with smart contracts on Fuse, with configuration details specific to the Fuse mainnet and Spark testnet.
+
+<CardGroup cols={2}>
+  <Card title="Hardhat" icon="hammer" href="#hardhat">
+    Compile, test, and deploy contracts with Hardhat and the Ignition deployment system.
+  </Card>
+  <Card title="Remix + MetaMask" icon="code" href="#remix-and-metamask">
+    Deploy contracts directly from the browser using Remix IDE and MetaMask.
+  </Card>
+  <Card title="Thirdweb" icon="cube" href="#thirdweb">
+    Use the Thirdweb CLI and dashboard to deploy prebuilt or custom contracts.
+  </Card>
+  <Card title="Grove" icon="server" href="#grove">
+    Get a dedicated RPC endpoint for Fuse through the Grove decentralized RPC network.
+  </Card>
+  <Card title="WalletConnect" icon="link" href="#walletconnect">
+    Integrate WalletConnect to connect dApps to smart contract wallets on Fuse.
+  </Card>
+  <Card title="Other tools" icon="wrench" href="#other-tools">
+    JustSmartContracts, OpenZeppelin Defender, and other EVM-compatible utilities.
+  </Card>
+</CardGroup>
+
+---
+
+## Hardhat
+
+[Hardhat](https://hardhat.org) is a development environment for Ethereum that supports compiling, testing, debugging, and deploying smart contracts. The steps below walk through deploying an ERC-20 token to Fuse.
+
+### Prerequisites
+
+- Node.js installed
+- Basic knowledge of Solidity and JavaScript
+
+### Install and initialize
+
+```bash
+mkdir hardhat-fuse-guide && cd hardhat-fuse-guide
+npm init -y
+npx hardhat init
+npm install --save-dev hardhat
+npm install --save-dev @nomicfoundation/hardhat-toolbox
+```
+
+When prompted during `npx hardhat init`, accept the option to install the sample project's dependencies.
+
+### Write the contract
+
+In the `contracts/` directory, delete the default `Lock.sol` and create `Token.sol`:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts@4.0.0/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts@4.0.0/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts@4.0.0/access/Ownable.sol";
+
+contract MyToken is ERC20, ERC20Burnable, Ownable {
+    constructor(address initialOwner)
+        ERC20("MyToken", "MTK")
+        Ownable()
+    {}
+
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+}
+```
+
+Compile with:
+
+```bash
+npx hardhat compile
+```
+
+### Create a deployment module
+
+In `ignition/modules/`, create `deploy.js`:
+
+```javascript
+const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
+
+const Token = buildModule("Token", (m) => {
+  const contract = m.contract("Token");
+  return { contract };
+});
+
+module.exports = Token;
+```
+
+### Configure Hardhat for Fuse
+
+Update `hardhat.config.js` to add the Fuse networks:
+
+```javascript
+module.exports = {
+  networks: {
+    fuse: {
+      url: "https://rpc.fuse.io/",
+      accounts: [`0xPRIVATE_KEY`],
+    },
+    spark: {
+      url: "https://rpc.fusespark.io/",
+      accounts: [`0xPRIVATE_KEY`],
+    },
+  },
+};
+```
+
+<Warning>
+  Never commit your private key to version control. Use environment variables or a `.env` file with `dotenv` to keep keys out of your source code.
+</Warning>
+
+### Deploy
+
+```bash
+npx hardhat ignition deploy ./ignition/modules/deploy.js --network fuse
+```
+
+### Verify contracts
+
+To verify contracts on the Fuse Explorer (Blockscout), add the `etherscan` configuration to `hardhat.config.js`:
+
+```javascript
+etherscan: {
+  apiKey: {
+    fuse: "YOUR_KEY_IF_YOU_HAVE_ONE",
+    spark: "YOUR_KEY_IF_YOU_HAVE_ONE"
+  },
+  customChains: [
+    {
+      network: "fuse",
+      chainId: 122,
+      urls: {
+        apiURL: "https://explorer.fuse.io/api",
+        browserURL: "https://explorer.fuse.io"
+      }
+    },
+    {
+      network: "spark",
+      chainId: 123,
+      urls: {
+        apiURL: "https://explorer.fusespark.io/api",
+        browserURL: "https://explorer.fusespark.io"
+      }
+    }
+  ]
+}
+```
+
+Then verify:
+
+```bash
+npx hardhat verify --network fuse DEPLOYED_CONTRACT_ADDRESS "Constructor argument 1"
+```
+
+---
+
+## Remix and MetaMask
+
+[Remix IDE](https://remix-project.org/) is a browser-based smart contract development environment. Deploying to Fuse with Remix requires MetaMask connected to the Fuse Network.
+
+### Steps
+
+<Steps>
+  <Step title="Open Remix">
+    Go to [https://remix-project.org/](https://remix-project.org/) and create a new Solidity file (e.g., `Token.sol`).
+  </Step>
+  <Step title="Write and compile">
+    Paste your contract code and click **Compile**. Select the Solidity version matching your `pragma` statement (e.g., `0.8.0`). A green checkmark confirms successful compilation.
+
+    ```solidity
+    // SPDX-License-Identifier: MIT
+    pragma solidity ^0.8.0;
+
+    import "@openzeppelin/contracts@4.0.0/token/ERC20/ERC20.sol";
+
+    contract MyToken is ERC20 {
+        constructor() ERC20("MyToken", "MTK") {}
+    }
+    ```
+  </Step>
+  <Step title="Connect MetaMask">
+    In the **Deploy** tab, set the environment to **Injected Provider**. MetaMask will prompt you to sign in and will display your connected address and the active Fuse network.
+  </Step>
+  <Step title="Deploy">
+    Click **Deploy** and approve the MetaMask transaction. The contract address appears in the Remix console once deployed.
+  </Step>
+  <Step title="Verify on Explorer">
+    Copy the transaction hash and look it up on [https://explorer.fuse.io/](https://explorer.fuse.io/) for mainnet or [https://explorer.fusespark.io/](https://explorer.fusespark.io/) for testnet.
+  </Step>
+</Steps>
+
+---
+
+## Thirdweb
+
+[Thirdweb](https://portal.thirdweb.com) provides a CLI and dashboard for deploying smart contracts to any EVM chain, including Fuse, without managing RPC URLs or private keys directly.
+
+### Create a contract
+
+```bash
+npx thirdweb create contract
+```
+
+Follow the prompts to name your project, choose a framework (Hardhat or Foundry), name your contract, and select a base type (Empty, ERC20, ERC721, or ERC1155).
+
+The generated contract extends a Thirdweb base contract. For example, an ERC721 contract:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@thirdweb-dev/contracts/base/ERC721Base.sol";
+
+contract Contract is ERC721Base {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _royaltyRecipient,
+        uint128 _royaltyBps
+    ) ERC721Base(_name, _symbol, _royaltyRecipient, _royaltyBps) {}
+}
+```
+
+### Deploy a contract
+
+From your project root:
+
+```bash
+npx thirdweb deploy
+```
+
+This compiles your contracts, lets you select which to deploy, uploads the ABI to IPFS, and opens a dashboard UI where you can fill in constructor parameters. Select **Fuse** as the target network and confirm the deployment.
+
+### Deploy a prebuilt contract
+
+Visit [https://thirdweb.com/explore](https://thirdweb.com/explore) to deploy NFT collections, tokens, or marketplaces directly without writing contract code. Select a contract type, configure it, and choose Fuse as the network.
+
+---
+
+## Grove
+
+[Grove](https://www.grove.city) is a decentralized RPC network that provides reliable endpoints for connecting to Fuse. Use Grove to get a dedicated, high-availability RPC URL for your application.
+
+### Getting started
+
+<Steps>
+  <Step title="Sign up">
+    Create an account at [https://portal.grove.city](https://portal.grove.city).
+  </Step>
+  <Step title="Create an application">
+    In the Grove dashboard, click **New Application** and fill in a name, description, and optional Appmoji identifier.
+  </Step>
+  <Step title="Find your Fuse endpoint">
+    Search for "Fuse" in the endpoint search bar to find your unique RPC URL for Fuse Mainnet.
+  </Step>
+  <Step title="Use the endpoint">
+    Add the Grove RPC URL to your `hardhat.config.js`, MetaMask, or any Web3 provider.
+  </Step>
+</Steps>
+
+For detailed RPC call documentation, see the [Grove Fuse API docs](https://docs.grove.city/fuse-api/intro).
+
+---
+
+## WalletConnect
+
+[WalletConnect](https://walletconnect.com) is an open-source protocol for connecting dApps to mobile wallets via QR codes or deep links. Fuse smart contract wallets are fully compatible with the WalletConnect protocol.
+
+### Detecting smart contract wallets
+
+When a user connects via WalletConnect, they may be using a smart contract wallet. Detect this by checking whether the connected address has deployed code:
+
+```javascript
+const rpcUrl = "https://rpc.fuse.io";
+
+// with ethers
+import { providers, utils } from "ethers";
+const provider = new providers.JsonRpcProvider(rpcUrl);
+const bytecode = await provider.getCode(address);
+const isSmartContract = bytecode && utils.hexStripZeros(bytecode) !== "0x";
+
+// with web3
+import Web3 from "web3";
+const web3 = new Web3(rpcUrl);
+const bytecode = await web3.eth.getCode(address);
+const isSmartContract = bytecode && utils.hexStripZeros(bytecode) !== "0x";
+```
+
+### Message verification
+
+For externally owned accounts (EOAs), use `ecrecover()`. For smart contract wallets, use the [EIP-1271](https://eips.ethereum.org/EIPS/eip-1271) `isValidSignature()` method:
+
+```solidity
+contract ERC1271 {
+    bytes4 constant internal MAGICVALUE = 0x1626ba7e;
+
+    function isValidSignature(
+        bytes32 _hash,
+        bytes memory _signature
+    )
+        public
+        view
+        returns (bytes4 magicValue);
+}
+```
+
+Hash messages using EIP-191 before passing to `isValidSignature()`:
+
+```javascript
+// ethers
+import { utils } from "ethers";
+const hash = utils.hashMessage(message);
+
+// web3
+const hash = web3.eth.accounts.hashMessage(message);
+```
+
+### Transactions with smart contract wallets
+
+Smart contract wallets use meta-transactions relayed to the network by a relayer. Submit a standard `{ to, value, data }` transaction to your Web3 provider. The mobile wallet converts it to a meta-transaction and the relayer handles gas payment in FUSE.
+
+Your dApp receives the transaction hash. Because relayers may replay transactions with higher gas prices (changing the hash), monitor for specific emitted events rather than relying solely on the transaction hash.
+
+---
+
+## Other tools
+
+| Tool | Description |
+|---|---|
+| [JustSmartContracts](https://justsmartcontracts.dev/) | Browser-based deployment tool for EVM chains |
+| [OpenZeppelin Defender](https://defender.openzeppelin.com) | Manage access controls, upgrades, and pausing for deployed contracts |
+| [Remix IDE](https://remix-project.org/) | Web and desktop IDE for smart contract development |

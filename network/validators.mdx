@@ -1,0 +1,91 @@
+---
+title: "Run a Fuse validator node"
+description: "Learn how to become a Fuse Network validator: stake requirements, node setup, block rewards, jailing conditions, and how to join the active validator set."
+---
+
+Fuse Network is operated by validator nodes hosted by participants around the world. Validators run the software that holds a copy of the blockchain, groups and validates transactions every 5 seconds, and signs new blocks. In return, they earn newly minted FUSE tokens and transaction fees. Anyone who meets the stake requirement and technical prerequisites can become a validator — the process is entirely permissionless.
+
+## Requirements at a glance
+
+<CardGroup cols={2}>
+  <Card title="Minimum stake" icon="coins">
+    100,000 FUSE (own stake + delegated)
+  </Card>
+  <Card title="Maximum stake per node" icon="arrow-up">
+    5,000,000 FUSE
+  </Card>
+  <Card title="Maximum validators" icon="users">
+    100 active validators
+  </Card>
+  <Card title="Yearly block reward" icon="percent">
+    5% inflation distributed to validators and delegators
+  </Card>
+</CardGroup>
+
+## Who should become a validator?
+
+**Companies building on Fuse** can own a piece of the network, earn rewards as it grows, and participate in governance decisions that affect the infrastructure they depend on.
+
+**Third-party service providers** — such as KYC providers, exchanges, or lenders operating across chains — can become network stakeholders and gain reliable, first-class access to Fuse infrastructure.
+
+**Community operators on Fuse** who already run communities and payments products can upgrade to validator status to provide better service to their users and earn rewards.
+
+<Note>
+  Running a validator node requires a technical background in blockchain infrastructure and web hosting. If you prefer to participate without operating infrastructure, you can [delegate your FUSE tokens](/network/staking-and-delegation) to an existing validator instead.
+</Note>
+
+## Stake and validator set selection
+
+The stake counted for a validator is the **sum of its own staked FUSE and all tokens delegated to it** by other holders. At the end of each cycle (~2 days, 34,560 blocks), the Consensus contract selects a new validator set from a random snapshot of all pending validators whose total stake meets the 100,000 FUSE minimum.
+
+The 100-validator cap and minimum stake requirement together guard against Sybil attacks: creating multiple validators is costly enough to deter cheap identity duplication.
+
+## Block rewards and fee distribution
+
+The validator who publishes a block earns:
+
+1. **Newly minted FUSE tokens** — the protocol distributes 5% yearly inflation as block rewards, updated each block by the BlockReward contract.
+2. **Transaction fees** — fees paid by users for transactions included in the block.
+
+Over time, a validator can expect to publish a share of blocks proportional to its overall stake. Delegators receive a share of rewards proportional to their delegated stake, minus the validator's fee (minimum 15%).
+
+<Tip>
+  Attracting delegators is the most effective way to increase your validator's stake share and earn a greater proportion of block rewards.
+</Tip>
+
+## Jailing
+
+Validators are expected to remain online and follow consensus rules. Violating those rules — such as producing invalid blocks or missing block slots — results in **jailing**:
+
+<Warning>
+  A jailed validator cannot produce blocks (earning no rewards) and cannot withdraw staked FUSE for several days. Ensure your node has redundant infrastructure and is monitored continuously.
+</Warning>
+
+## How to become a validator
+
+<Steps>
+  <Step title="Acquire at least 100,000 FUSE">
+    Obtain the minimum required stake of 100,000 FUSE tokens. You can use your own stake, or a combination of your own stake and delegated tokens from other holders, as long as the total meets the minimum.
+  </Step>
+  <Step title="Set up a full node">
+    Run the Fuse full node software. Your node must maintain a complete copy of the blockchain and be reachable by the network at all times. Refer to the [node setup documentation](https://github.com/fuseio/fuse-network) for configuration details and hardware recommendations.
+  </Step>
+  <Step title="Stake your FUSE">
+    Lock your FUSE tokens in the Consensus contract to register as a pending validator. You have two options:
+
+    - Send FUSE directly to the Consensus contract address `0x3014ca10b91cb3D0AD85fEf7A3Cb95BCAc9c0f79` on Fuse Network.
+    - Call the `stake` function on the [Consensus contract](https://explorer.fuse.io/address/0x3014ca10b91cb3d0ad85fef7a3cb95bcac9c0f79).
+
+    The easiest way to stake is through the [Fuse Staking platform](https://staking.fuse.io).
+  </Step>
+  <Step title="Wait for the next cycle snapshot">
+    Once staked, your address becomes a **pending validator**. The Consensus contract takes snapshots of pending validators throughout each cycle (~2 days). At cycle end, a random snapshot is chosen and that set becomes the next active validator set.
+  </Step>
+  <Step title="Start producing blocks">
+    When selected, your node will be included in the round-robin signing schedule. Each validator has a 5-second window to sign and broadcast its block. Monitor your node to ensure it does not miss its slot.
+  </Step>
+</Steps>
+
+## Staking platform
+
+The [Fuse Staking platform](https://staking.fuse.io) provides a UI for staking, monitoring validator performance, reviewing reward history, and managing delegations without needing to interact with smart contracts directly.

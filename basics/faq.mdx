@@ -1,0 +1,146 @@
+---
+title: "Fuse Network frequently asked questions"
+description: "Answers to common questions about Fuse Network, smart wallets, the FuseBox SDK, the token bridge, gas fees, and getting help from the community."
+---
+
+This page answers the most common questions about Fuse Network, building on Fuse, using the token bridge, and understanding network fundamentals. If you don't find what you need here, join the community on [Discord](https://discord.com/invite/jpPMeSZ) or [Telegram](https://t.me/fuseio).
+
+## Fuse basics
+
+<AccordionGroup>
+  <Accordion title="What is Fuse Network?">
+    Fuse Network is a decentralized platform for creating and deploying Web3 applications. It is an EVM-compatible Layer 1 blockchain that offers fast and inexpensive transactions, making it ideal for building decentralized applications. The native token of the Fuse Network is the FUSE token.
+  </Accordion>
+
+  <Accordion title="What is a Fuse Smart Wallet?">
+    A Fuse Smart Wallet is a non-custodial smart contract wallet based on [ERC-4337](https://eips.ethereum.org/EIPS/eip-4337) that allows users to securely store, send, and receive cryptocurrency and tokens. It is built on the Fuse Network and supports gasless transactions, making it practical for use in dApps. Each smart wallet is an upgradable smart contract deployed on-chain with an owner who controls the wallet's funds.
+  </Accordion>
+
+  <Accordion title="What is an Operator?">
+    An Operator on Fuse is an intermediary that enables consumers to interact with the Fuse blockchain via their own solutions. Operators can be integrators, payment providers, financial institutions, apps, consumer clubs, sharing economies, startups, local communities, and retailers. A key feature of Operators is that they pay network fees on behalf of their users. Operators build their applications using the FuseBox Web SDK, Flutter SDK, or REST API endpoints.
+  </Accordion>
+
+  <Accordion title="What is a gasless transaction?">
+    A gasless transaction is a transaction where the user does not pay gas fees directly. On Fuse, gasless transactions are covered by paymasters—entities that are incentivized to provide this service to users. The paymaster model is part of the ERC-4337 account abstraction standard.
+  </Accordion>
+
+  <Accordion title="What are the network IDs for Fuse mainnet and testnet?">
+    - **Fuse mainnet**: Chain ID / Network ID **122**, RPC URL `https://rpc.fuse.io`
+    - **Fuse Spark testnet**: Chain ID / Network ID **123**, RPC URL `https://rpc.fusespark.io`
+  </Accordion>
+</AccordionGroup>
+
+## Building on Fuse
+
+<AccordionGroup>
+  <Accordion title="How do I deploy to Fuse Sparknet (testnet)?">
+    Follow the "Build on Fuse" guide and set the Network ID to **123** in your deployment configuration. You can get free testnet FUSE tokens from the [ChainDrop faucet](https://chaindrop.org) or the [Stakely faucet](https://stakely.io/faucet/fuse-testnet-spark).
+  </Accordion>
+
+  <Accordion title="How do I deploy to Fuse mainnet?">
+    Follow the "Build on Fuse" guide and set the Network ID to **122**. Ensure your deploying account holds enough FUSE tokens to pay for gas.
+  </Accordion>
+
+  <Accordion title="Where can I find all API endpoints?">
+    The full API reference is available in the [API reference section](/api-reference/smart-wallet/overview) of this documentation. It covers the Smart Wallet API, Balances API, Trade API, Notification API, Explorer API, and Staking API.
+  </Accordion>
+
+  <Accordion title="What programming languages does the FuseBox SDK support?">
+    The FuseBox SDK currently supports **Dart** (Flutter) and **JavaScript/TypeScript** (Web SDK). Support for additional languages is planned. The SDK simplifies Account Abstraction on Fuse and offers smart contract wallet creation, ERC20 and native FUSE transfers, staking, data services, and trading functions.
+  </Accordion>
+
+  <Accordion title="Can I use the FuseBox SDK with other blockchains?">
+    The FuseBox SDK is designed to work with Fuse Network and Fuse Sparknet. Support for additional blockchains is planned for the future.
+  </Accordion>
+
+  <Accordion title="What should I do if I encounter issues with the FuseBox SDK?">
+    Try these steps:
+
+    1. Verify you followed the installation instructions correctly.
+    2. Check that you have the latest SDK version ([Web SDK on npm](https://www.npmjs.com/package/@fuseio/fusebox-web-sdk), [Flutter SDK on pub.dev](https://pub.dev/packages/fuse_wallet_sdk)).
+    3. Confirm your API key is valid and has the necessary permissions. Get an API key at [console.fuse.io/build](https://console.fuse.io/build).
+    4. Check the SDK documentation for known issues and solutions.
+    5. Ask for help in the [Discord](https://discord.com/invite/jpPMeSZ) developer channel.
+  </Accordion>
+</AccordionGroup>
+
+## Fuse Token Bridge
+
+<AccordionGroup>
+  <Accordion title="What tokens can be transferred using the Fuse Token Bridge?">
+    The Fuse Token Bridge supports **FUSE**, **USDC**, and **WETH** tokens.
+  </Accordion>
+
+  <Accordion title="Between which networks can I bridge tokens?">
+    Tokens can be bridged between Fuse Network and **Polygon**, **Optimism**, and **Arbitrum**.
+  </Accordion>
+
+  <Accordion title="The bridge shows a balance of 0 for my USDC or WETH. Why?">
+    The Fuse Bridge uses bridge-specific token versions: **USDC V2** and **WETH V2**. Their value is identical to standard USDC and WETH, but they are different contracts. You need to swap your standard USDC or WETH for the V2 versions first using [Voltage Finance](https://app.voltage.finance), then bridge the V2 tokens.
+  </Accordion>
+
+  <Accordion title="I deposited USDC or WETH into Fuse but don't see the tokens in my wallet.">
+    When you deposit via the bridge, you receive USDC V2 or WETH V2 tokens. Add them to your wallet manually:
+
+    - **USDC V2**: [`0x28c3d1cd466ba22f6cae51b1a4692a831696391a`](https://explorer.fuse.io/token/0x28C3d1cD466Ba22f6cae51b1a4692a831696391A/token-transfers)
+    - **WETH V2**: [`0x5622f6dc93e08a8b717b149677930c38d5d50682`](https://explorer.fuse.io/token/0x5622F6dC93e08a8b717B149677930C38d5d50682/token-transfers)
+
+    After adding them, you can swap to standard USDC or WETH on [Voltage Finance](https://app.voltage.finance).
+  </Accordion>
+
+  <Accordion title="What are the FUSE token addresses on other networks?">
+    - **Optimism**: [`0xe453d6649643F1F460C371dC3D1da98F7922fe51`](https://optimistic.etherscan.io/token/0xe453d6649643f1f460c371dc3d1da98f7922fe51)
+    - **Arbitrum**: [`0x6b021b3f68491974bE6D4009fEe61a4e3C708fD6`](https://arbiscan.io/token/0x6b021b3f68491974be6d4009fee61a4e3c708fd6)
+    - **Polygon**: [`0x6b021b3f68491974bE6D4009fEe61a4e3C708fD6`](https://polygonscan.com/token/0x6b021b3f68491974be6d4009fee61a4e3c708fd6)
+  </Accordion>
+
+  <Accordion title="What technology powers the Fuse bridge?">
+    The Fuse Token Bridge is powered by **LayerZero** technology. Its security is monitored by blockchain security experts at **Ironblocks**.
+  </Accordion>
+
+  <Accordion title="Are there fees for using the Fuse Token Bridge?">
+    Currently there are zero bridge fees on the Fuse Token Bridge. However, you will still pay gas fees on the source and destination networks.
+  </Accordion>
+
+  <Accordion title="Are there any liquidity concerns?">
+    Liquidity on the bridge is currently limited. Avoid bridging large amounts until liquidity improves.
+  </Accordion>
+
+  <Accordion title="I received unexpected FUSE tokens after withdrawing from Polygon.">
+    There are two FUSE token contracts on Polygon: a deprecated one and the current active one. Both are valid, but the deprecated one is no longer used by the bridge.
+
+    - **Deprecated** (Polygon): [`0xF915fDDa4c882731C0456a4214548Cd13A822886`](https://polygonscan.com/token/0xF915fDDa4c882731C0456a4214548Cd13A822886)
+    - **Current** (Polygon): [`0x6b021b3f68491974bE6D4009fEe61a4e3C708fD6`](https://polygonscan.com/token/0x6b021b3f68491974be6d4009fee61a4e3c708fd6)
+
+    Swap the deprecated tokens for the new ones using MetaMask's built-in swap or any dApp that supports both contracts.
+  </Accordion>
+
+  <Accordion title="Is there a guide for using the bridge?">
+    Yes. Watch the [bridge walkthrough video](https://youtu.be/LUsoAdsTWM4?si=LuOxRsTlMZ9RSsHh) for a step-by-step demonstration.
+  </Accordion>
+</AccordionGroup>
+
+## Gas fees
+
+<AccordionGroup>
+  <Accordion title="How are gas fees on Fuse Network calculated?">
+    Gas fees are calculated by multiplying the amount of gas used by the current gas price:
+
+    ```
+    gas fee = gas used × gas price (in gwei)
+    ```
+
+    Each operation—sending tokens, interacting with a contract, transferring assets—requires a measurable amount of computational work expressed in gas units. Fuse Network has significantly lower gas prices than Ethereum mainnet, making individual transactions much cheaper.
+  </Accordion>
+</AccordionGroup>
+
+## Getting help
+
+<AccordionGroup>
+  <Accordion title="Where can I get support?">
+    - Join the [Telegram community](https://t.me/fuseio/163566)
+    - Join the [Discord server](https://discord.com/invite/jpPMeSZ)
+    - Email the team at [hello@fuse.io](mailto:hello@fuse.io)
+    - Visit [fuse.io](https://fuse.io) for additional resources
+  </Accordion>
+</AccordionGroup>

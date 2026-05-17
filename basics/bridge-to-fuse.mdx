@@ -1,0 +1,83 @@
+---
+title: "Bridge assets to Fuse Network"
+description: "Move tokens from Ethereum, Polygon, Arbitrum, BNB Chain, Solana, and centralized exchanges to Fuse Network using the Fuse Console bridge or third-party bridges."
+---
+
+Bridging lets you move digital assets from other blockchains onto Fuse Network. Because Fuse is an independent EVM chain, tokens from Ethereum and other networks cannot be sent directly — they must be locked on the source chain and a corresponding wrapped token is minted on Fuse. The bridges below handle this process automatically.
+
+## Fuse Console bridge
+
+The primary bridge for Fuse Network is built into [Fuse Console](https://console.fuse.io/bridge). It connects Fuse to the following chains:
+
+<CardGroup cols={3}>
+  <Card title="Ethereum" icon="ethereum" />
+  <Card title="Polygon" icon="hexagon" />
+  <Card title="Arbitrum" icon="circle-nodes" />
+  <Card title="Optimism" icon="circle-dot" />
+  <Card title="Base" icon="b" />
+  <Card title="BNB Chain" icon="coins" />
+  <Card title="Solana" icon="sun" />
+</CardGroup>
+
+### Supported assets
+
+The Fuse Console bridge supports the following tokens:
+
+| Token | Description |
+|---|---|
+| FUSE | Native token of Fuse Network |
+| USDC | USD Coin stablecoin |
+| USDT | Tether stablecoin |
+| WETH | Wrapped Ether |
+
+### How to bridge using Fuse Console
+
+<Steps>
+  <Step title="Open the Fuse Console bridge">
+    Go to [console.fuse.io/bridge](https://console.fuse.io/bridge) and connect your wallet.
+  </Step>
+  <Step title="Select source chain and asset">
+    Choose the chain you are bridging from (for example, Ethereum) and select the token you want to move (for example, USDC).
+  </Step>
+  <Step title="Enter the amount and destination">
+    Enter the amount to bridge. The destination will be your connected wallet address on Fuse Network.
+  </Step>
+  <Step title="Approve and confirm the transaction">
+    If this is your first time bridging a token, you will need to approve the bridge contract to spend it. Then confirm the bridge transaction. Wait for the transaction to finalize on the source chain.
+  </Step>
+  <Step title="Receive tokens on Fuse Network">
+    Once the source transaction is confirmed, the corresponding tokens will appear in your wallet on Fuse Network. Switch your wallet to Fuse Mainnet (Chain ID 122) to see them.
+  </Step>
+</Steps>
+
+<Note>
+  Bridge times vary by source chain. Ethereum transactions typically take a few minutes to confirm. Always verify you are on the correct destination network before proceeding.
+</Note>
+
+### Bridge from centralized exchanges
+
+Fuse Console also supports direct withdrawals from centralized exchanges including **Binance**, **Coinbase**, **KuCoin**, and **Huobi Global**. Select your exchange as the source when prompted.
+
+## Third-party bridges
+
+### AllBridge
+
+[AllBridge](https://app.allbridge.io/bridge?from=SOL&to=FUSE&asset=USDC) is a cross-chain bridge that supports both EVM and non-EVM blockchains. Use AllBridge to transfer assets from **Solana** to Fuse Network. It supports native and wrapped token transfers.
+
+### LayerSwap
+
+[LayerSwap](https://layerswap.io/app) enables instant asset transfers across centralized exchanges, blockchains, and wallets with minimal fees. It is particularly useful for moving funds from centralized exchanges directly to Fuse Network with significant gas savings.
+
+## Important notes
+
+<Warning>
+  Always double-check the destination network before confirming a bridge transaction. Sending tokens to the wrong network can result in funds being inaccessible without a compatible bridge or additional steps to recover them.
+</Warning>
+
+<Warning>
+  Bridge contracts are smart contracts. While the bridges listed here are established services, all cross-chain operations carry inherent smart contract risk. Only bridge amounts you are comfortable with.
+</Warning>
+
+<Tip>
+  You need a small amount of FUSE to pay gas fees once your tokens arrive on Fuse Network. If you do not have any FUSE, consider bridging a small amount of FUSE first, or check whether the application you are using supports gasless transactions via a Paymaster.
+</Tip>

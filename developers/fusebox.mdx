@@ -1,0 +1,95 @@
+---
+title: "FuseBox: get an API key and set up Paymaster"
+description: "Create an Operator account on the Fuse Console, obtain an API key, fund your account, and configure Paymaster for gasless transactions."
+---
+
+FuseBox is Fuse's open-source Wallet-as-a-Service platform built on ERC-4337 account abstraction. It gives developers a Bundler to collect UserOperations and a Paymaster to sponsor gas fees, making it possible to deliver a completely gasless experience to end users. The platform is accessible via TypeScript and Flutter SDKs, and it connects directly to the Fuse blockchain without requiring a separate RPC node provider.
+
+## What FuseBox provides
+
+FuseBox is built on the [FuseBox Backend](https://github.com/fuseio/fusebox-backend), a NestJS service that exposes ERC-4337 smart contract infrastructure through a set of REST APIs and SDKs.
+
+<CardGroup cols={2}>
+  <Card title="ERC-4337 smart accounts" icon="wallet">
+    Create programmable smart contract wallets for your users without manual onboarding.
+  </Card>
+  <Card title="Bundler" icon="layers">
+    Collect and submit UserOperations to the network on behalf of your users.
+  </Card>
+  <Card title="Paymaster" icon="circle-dollar-sign">
+    Sponsor gas fees so users never need to hold FUSE tokens to transact.
+  </Card>
+  <Card title="SDKs" icon="code">
+    TypeScript (`@fuseio/fusebox-web-sdk`) and Flutter (Dart) SDKs for rapid integration.
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before creating an Operator account, make sure you have the following:
+
+- A working knowledge of the Fuse blockchain
+- A Web3 wallet such as MetaMask or Coinbase Wallet
+- FUSE tokens in your Externally Owned Account (EOA). You can purchase FUSE on the [Console](https://console.fuse.io) or bridge assets from another chain using the [Bridge](https://console.fuse.io/bridge).
+
+<Note>
+  Gas fees on Fuse are very low. Sponsoring your users' transactions via Paymaster is economical even at scale.
+</Note>
+
+## Get an API key
+
+<Steps>
+  <Step title="Go to console.fuse.io">
+    Navigate to [console.fuse.io](https://console.fuse.io). You will see the Console welcome page.
+  </Step>
+
+  <Step title="Connect your wallet">
+    Click **Connect Wallet**. You will be prompted to sign a message using MetaMask or Coinbase Wallet to verify ownership of your EOA. After signing, you are redirected to your Dashboard, which shows your FUSE token balance and the **Wallet**, **Build**, **Bridge**, and **Staking** menu items.
+  </Step>
+
+  <Step title="Become an Operator">
+    Click **Become an Operator**. This redirects you to the **Build** section of the Console. Operator accounts are developer accounts that enable you to obtain an API key, fund a Paymaster, and pay for premium subscriptions in future updates. Operators can freely deposit and withdraw any token available on the Fuse network.
+  </Step>
+
+  <Step title="Create your project">
+    Click **Create your project** on the Operator landing page. This opens the Operator dashboard.
+  </Step>
+
+  <Step title="Create an Operator Wallet">
+    Click **Create Operator Wallet**. Your wallet provider will prompt you to sign a message. After signing, fill in your contact details and confirm. You will see a success screen confirming that your Operator account has been created.
+
+    <Info>
+      Your Operator Account Address is a Smart Contract Wallet. It supports ERC-4337 functions including batch transaction requests.
+    </Info>
+  </Step>
+
+  <Step title="Fund the Operator Account">
+    Click **Add funds** and copy your Operator Account address. Send at least **10 FUSE tokens** to this address.
+
+    Once the balance is confirmed, your API key becomes accessible on the Operator dashboard.
+  </Step>
+</Steps>
+
+## Set up Paymaster for gasless transactions
+
+Your Operator account's Paymaster is pre-funded with **1 FUSE** when created. To activate gasless transactions in your application, pass `withPaymaster: true` as the third argument when initialising the FuseBox SDK:
+
+```javascript
+import { FuseSDK } from "@fuseio/fusebox-web-sdk";
+import { ethers } from "ethers";
+
+const apiKey = "YOUR_FUSEBOX_API_KEY";
+const credentials = new ethers.Wallet(privateKey);
+
+const fuseSDK = await FuseSDK.init(apiKey, credentials, {
+  withPaymaster: true,
+});
+```
+
+When `withPaymaster` is enabled, the Paymaster covers the gas cost of every UserOperation submitted through the SDK. Your Operator account balance is debited for those fees.
+
+<Warning>
+  Monitor your Operator account balance on the Console. If the Paymaster balance is depleted, sponsored transactions will fail. Top up via the **Add funds** button.
+</Warning>
+
+Once initialised, you can call any FuseBox SDK method — token transfers, NFT transfers, contract calls, and more — and your users will never see a gas prompt. See the [FuseBox SDK overview](/developers/fusebox-sdk) for the full list of available operations.

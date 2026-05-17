@@ -1,0 +1,352 @@
+---
+title: "Explorer API: query Fuse blockchain and transactions"
+description: "Access Fuse blockchain data including transactions, address balances, token analytics, smart contract info, blocks, and event logs via REST."
+---
+
+The Explorer API is a REST interface that exposes the full breadth of on-chain data from the Fuse blockchain. It follows a module-action query pattern similar to Etherscan: most endpoints accept `module` and `action` query parameters that determine the type of data returned. The API covers account balances, transaction history, token transfers, block data, smart contract source code, event logs, and network statistics — making it suitable for analytics dashboards, block explorers, and DApp backends that need rich chain data.
+
+## Base URL
+
+```
+https://api.fuse.io/api/v0/explorer
+```
+
+## Authentication
+
+Pass your public API key as a query parameter on every request:
+
+```
+?apiKey=YOUR_PUBLIC_API_KEY
+```
+
+Get your key from the [Fuse Console](https://console.fuse.io/build).
+
+## Query pattern
+
+Explorer API endpoints use a module-action structure:
+
+```
+GET https://api.fuse.io/api/v0/explorer?module=account&action=balance&address=0xABC...&apiKey=YOUR_KEY
+```
+
+The `module` and `action` parameters are always required and determine the response shape.
+
+## Account endpoints
+
+### Get address balance
+
+Returns the native FUSE balance for a single address.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=account&action=balance`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `account`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `balance`.
+</ParamField>
+
+<ParamField query="address" type="string" required>
+  The address hash to query.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer?module=account&action=balance&address=0x1234567890abcdef1234567890abcdef12345678&apiKey=YOUR_API_KEY"
+```
+
+```json
+{
+  "status": "1",
+  "message": "OK",
+  "result": "5000000000000000000"
+}
+```
+
+---
+
+### Get balance from a specific block
+
+Returns the native FUSE balance for an address at a specific block.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=account&action=eth_get_balance`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `account`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `eth_get_balance`.
+</ParamField>
+
+<ParamField query="address" type="string" required>
+  The address hash to query.
+</ParamField>
+
+<ParamField query="block" type="string">
+  Block number, or one of: `latest`, `earliest`, `pending`.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+### Get balances for multiple addresses
+
+Returns FUSE balances for up to multiple addresses in a single call.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=account&action=balancemulti`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `account`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `balancemulti`.
+</ParamField>
+
+<ParamField query="address" type="string" required>
+  Comma-separated list of address hashes.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+### Get transaction list for an address
+
+Returns a list of normal (external) transactions for a given address.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=account&action=txlist`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `account`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `txlist`.
+</ParamField>
+
+<ParamField query="address" type="string" required>
+  The address to query transactions for.
+</ParamField>
+
+<ParamField query="startblock" type="string">
+  Starting block number for the query range.
+</ParamField>
+
+<ParamField query="endblock" type="string">
+  Ending block number for the query range.
+</ParamField>
+
+<ParamField query="page" type="number">
+  Page number for pagination.
+</ParamField>
+
+<ParamField query="offset" type="number">
+  Number of results per page.
+</ParamField>
+
+<ParamField query="sort" type="string">
+  Sort order: `asc` or `desc`.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer?module=account&action=txlist&address=0x1234567890abcdef1234567890abcdef12345678&sort=desc&page=1&offset=10&apiKey=YOUR_API_KEY"
+```
+
+---
+
+### Get ERC-20 token transfers
+
+Returns all ERC-20 token transfers for an address, optionally filtered by token contract.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=account&action=tokentx`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `account`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `tokentx`.
+</ParamField>
+
+<ParamField query="address" type="string" required>
+  The wallet address to query.
+</ParamField>
+
+<ParamField query="contractaddress" type="string">
+  Optional. Filter results to a specific token contract.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+## Token endpoints
+
+### Get token information
+
+Returns metadata for a specific token.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=token&action=getToken`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `token`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `getToken`.
+</ParamField>
+
+<ParamField query="contractaddress" type="string" required>
+  The token contract address.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+### Get token holders
+
+Returns a paginated list of addresses holding a given token.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=token&action=getTokenHolders`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `token`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `getTokenHolders`.
+</ParamField>
+
+<ParamField query="contractaddress" type="string" required>
+  The token contract address.
+</ParamField>
+
+<ParamField query="page" type="number">
+  Page number.
+</ParamField>
+
+<ParamField query="offset" type="number">
+  Results per page.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+## Block endpoints
+
+### Get block number by timestamp
+
+Returns the block closest to a given Unix timestamp.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=block&action=getblocknobytime`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `block`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `getblocknobytime`.
+</ParamField>
+
+<ParamField query="timestamp" type="string" required>
+  Unix timestamp in seconds.
+</ParamField>
+
+<ParamField query="closest" type="string" required>
+  Whether to return the `before` or `after` block closest to the timestamp.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+## Stats endpoints
+
+### Get network ETH price
+
+Returns the current FUSE price in USD and BTC.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/explorer?module=stats&action=ethprice`
+
+#### Request parameters
+
+<ParamField query="module" type="string" required>
+  Must be `stats`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `ethprice`.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer?module=stats&action=ethprice&apiKey=YOUR_API_KEY"
+```
+
+```json
+{
+  "status": "1",
+  "message": "OK",
+  "result": {
+    "ethusd": "0.0782",
+    "ethusd_timestamp": "1700000000",
+    "ethbtc": "0.0000025"
+  }
+}
+```
+
+## Error responses
+
+| Status | Description |
+|---|---|
+| `403` | Forbidden — invalid or missing API key |

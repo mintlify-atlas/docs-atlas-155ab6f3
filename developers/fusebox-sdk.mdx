@@ -1,0 +1,400 @@
+---
+title: "FuseBox SDK: smart wallets and account abstraction"
+description: "Build gasless, account-abstracted apps on Fuse with the FuseBox Web SDK: initialize smart wallets, relay transactions, swap tokens, and stake."
+---
+
+The FuseBox Web SDK gives you a TypeScript-first interface to Fuse's account abstraction infrastructure. With a single `FuseSDK.init()` call you get a smart contract wallet scoped to each user's credentials, and every subsequent operation — token transfers, NFT sends, swaps, staking — is relayed on-chain with gas fees covered by the paymaster. This page covers installation through all core operations, with a troubleshooting reference and migration guide at the end.
+
+## Installation
+
+Install the package from npm using your preferred package manager.
+
+<CodeGroup>
+
+```bash npm
+npm install @fuseio/fusebox-web-sdk
+```
+
+```bash yarn
+yarn add @fuseio/fusebox-web-sdk
+```
+
+```bash pnpm
+pnpm add @fuseio/fusebox-web-sdk
+```
+
+</CodeGroup>
+
+## Initialization
+
+<Steps>
+  <Step title="Get an API key">
+    Create a project in the [Fuse Developer Console](https://console.fuse.io/build) and copy your API key.
+  </Step>
+  <Step title="Import the SDK">
+
+```typescript
+import { FuseSDK } from "@fuseio/fusebox-web-sdk";
+import { ethers } from "ethers";
+```
+
+  </Step>
+  <Step title="Initialize the SDK instance">
+
+    Call `FuseSDK.init()` with your API key and an `ethers.Wallet` constructed from the user's private key. Pass `withPaymaster: true` to have gas fees sponsored automatically.
+
+```typescript
+const apiKey = "YOUR_FUSEBOX_API_KEY";
+const credentials = new ethers.Wallet(privateKey);
+const fuseSDK = await FuseSDK.init(apiKey, credentials, {
+  withPaymaster: true,
+});
+```
+
+  </Step>
+  <Step title="Read the smart contract wallet address">
+
+    After initialization the SDK has already derived — or deployed — the user's smart contract wallet. Retrieve its address with `getSender()`.
+
+```typescript
+const smartContractAddress = fuseSDK.wallet.getSender();
+console.log(`Smart contract wallet address: ${smartContractAddress}`);
+```
+
+  </Step>
+</Steps>
+
+<Info>
+  `FuseSDK.init()` authenticates the supplied credentials against the Fuse API and sets up the underlying smart wallet. No separate wallet-creation request is needed.
+</Info>
+
+## Core operations
+
+### Send a token transfer
+
+Use `transferToken()` to relay an ERC-20 or native FUSE transfer. The method covers gas on behalf of the user. It returns a user operation handle you can `await` to get the final transaction hash.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `tokenAddress` | address | Contract address of the ERC-20 token, or `0xEeee…EEEE` for native FUSE |
+| `recipientAddress` | address | Recipient wallet address |
+| `amount` | BigInt | Amount in wei |
+
+```typescript
+const tokenAddress = "0x28C3d1cD466Ba22f6cae51b1a4692a831696391A"; // USDC on Fuse
+const to = "RECEIVER_ADDRESS";
+const amount = ethers.parseUnits("0.001", 6); // USDC has 6 decimals
+
+const res = await fuseSDK.transferToken(tokenAddress, to, amount);
+
+console.log(`UserOpHash: ${res?.userOpHash}`);
+console.log("Waiting for transaction...");
+
+const receipt = await res?.wait();
+console.log("Transaction Hash:", receipt?.transactionHash);
+```
+
+### Send batch transactions
+
+`executeBatch()` groups multiple calls into a single user operation. A common pattern is an ERC-20 `approve` followed immediately by a contract call — both land atomically on-chain.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `to` | address | Target contract address |
+| `value` | number | Native value to send |
+| `data` | bytes | ABI-encoded call data |
+
+```typescript
+const approveCallData = ContractUtils.encodeERC20ApproveCall(
+  spender,
+  amount
+) as unknown as Uint8Array;
+
+const calls = [
+  {
+    to: tokenAddress,
+    value: BigInt(0),
+    data: approveCallData,
+  },
+  {
+    to: spender,
+    value: BigInt(0),
+    data: callData,
+  },
+];
+
+const res = await fuseSDK.executeBatch(calls, txOptions);
+console.log(`UserOpHash: ${res?.userOpHash}`);
+console.log("Waiting for transaction...");
+
+const receipt = await res?.wait();
+console.log("Transaction Hash:", receipt?.transactionHash);
+```
+
+### Transfer an NFT
+
+Use `transferNFT()` to relay an ERC-721 transfer. Provide the collection contract address, the recipient, and the token ID.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `nftContractAddress` | address | ERC-721 contract address |
+| `recipientAddress` | address | Recipient wallet address |
+| `tokenId` | number | ID of the token to transfer |
+
+```typescript
+const nftContractAddress = "NFT_CONTRACT_ADDRESS";
+const recipientAddress = "RECEIVER_ADDRESS";
+const tokenId = 1;
+
+const res = await fuseSDK.transferNFT(
+  nftContractAddress,
+  recipientAddress,
+  tokenId
+);
+
+console.log(`UserOpHash: ${res?.userOpHash}`);
+console.log("Waiting for transaction...");
+
+const receipt = await res?.wait();
+console.log("Transaction Hash:", receipt?.transactionHash);
+```
+
+### Swap tokens
+
+Use `swapTokens()` to exchange one token for another at the current market price. The method accepts a `TradeRequest` object and relays the swap transaction on behalf of the user.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `inputToken` | address | Contract address of the token to sell |
+| `outputToken` | address | Contract address of the token to buy |
+| `inputAmount` | number | Amount of the input token to trade |
+| `exactIn` | boolean | `true` for exact-input trades, `false` for exact-output |
+
+```typescript
+import { TradeRequest } from "@fuseio/fusebox-web-sdk";
+
+const nativeTokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+const usdcTokenAddress = "0x28C3d1cD466Ba22f6cae51b1a4692a831696391A";
+
+const res = await fuseSDK.swapTokens(
+  new TradeRequest(
+    nativeTokenAddress,
+    usdcTokenAddress,
+    parseUnits("1", 18),
+    true
+  )
+);
+
+console.log(`UserOpHash: ${res?.userOpHash}`);
+console.log("Waiting for transaction...");
+const ev = await res?.wait();
+console.log(
+  `Transaction hash: https://explorer.fuse.io/tx/${ev?.transactionHash}`
+);
+```
+
+### Get tokens owned by an address
+
+`explorerModule.getTokenList()` returns the full list of ERC-20 tokens — with name, symbol, and balance — held by any address.
+
+```typescript
+const address = "ADDRESS";
+const tokenList = await fuseSDK.explorerModule.getTokenList(address);
+```
+
+### Staking
+
+#### Get staking options
+
+Retrieve available staking pools from the staking module.
+
+```typescript
+const stakingOptions = await fuseSDK.stakingModule.getStakingOptions();
+```
+
+#### Stake tokens
+
+Call `stakeToken()` with a `StakeRequestBody` specifying the account, amount, and token. The native token address `0xEeee…EEEE` stakes FUSE.
+
+```typescript
+const nativeTokenAddress = Variables.NATIVE_TOKEN_ADDRESS;
+
+const res = await fuseSDK.stakeToken(
+  new StakeRequestBody({
+    accountAddress: fuseSDK.wallet.getSender(),
+    tokenAmount: "0.01",
+    tokenAddress: nativeTokenAddress,
+  })
+);
+
+console.log(`UserOpHash: ${res?.userOpHash}`);
+console.log("Waiting for transaction...");
+const ev = await res?.wait();
+console.log(
+  `Transaction hash: https://explorer.fuse.io/tx/${ev?.transactionHash}`
+);
+```
+
+#### Unstake tokens
+
+Call `unstakeToken()` with an `UnstakeRequestBody` and the staking contract address.
+
+```typescript
+const nativeTokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+
+const res = await fuseSDK.unstakeToken(
+  new UnstakeRequestBody({
+    accountAddress: fuseSDK.wallet.getSender(),
+    tokenAmount: "0.007",
+    tokenAddress: nativeTokenAddress,
+  }),
+  "0xb1DD0B683d9A56525cC096fbF5eec6E60FE79871"
+);
+
+console.log(`UserOpHash: ${res?.userOpHash}`);
+console.log("Waiting for transaction...");
+const ev = await res?.wait();
+console.log(
+  `Transaction hash: https://explorer.fuse.io/tx/${ev?.transactionHash}`
+);
+```
+
+## Non-blocking transactions
+
+By default each user operation uses a sequential 1D nonce, meaning you must wait for one transaction to land on-chain before submitting the next. For higher-throughput use cases — such as submitting an approve, unstake, withdraw, and transfer in one burst — pass `useNonceSequence: true` in `TxOptions`. This activates the 2D nonce manager, which assigns each operation its own nonce key so all four can enter the mempool simultaneously without blocking each other.
+
+You can optionally supply a `customNonceKey` to pin a specific key.
+
+```typescript
+const tokenAddress = "YOUR_TOKEN";
+const tokenDecimals = 18;
+const to = "RECEIVER_ADDRESS";
+const amount = ethers.parseUnits("0.001", tokenDecimals);
+const data = Uint8Array.from([]);
+
+// First operation — uses an auto-incremented nonce key
+await fuseSDK.transferToken(tokenAddress, to, amount, data, {
+  useNonceSequence: true,
+});
+
+// Second operation — uses a specific custom nonce key
+await fuseSDK.transferToken(tokenAddress, to, amount, data, {
+  useNonceSequence: true,
+  customNonceKey: 231,
+});
+```
+
+<Tip>
+  Both calls are submitted immediately without waiting for the first to be mined. Each user operation competes independently in the mempool.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="User op cannot be replaced: fee too low">
+    This error means the mempool already contains a pending user operation with the same nonce key and the replacement does not meet the 10% fee bump requirement. To replace a queued user operation, the new operation must set both `maxFeePerGas` and `maxPriorityFeePerGas` at least 10% higher than the existing one.
+
+    Pass `withRetry: true` and `feeIncrementPercentage: 11` in `TxOptions` to have the SDK handle the bump automatically:
+
+```typescript
+const res = await fuseSDK.transferToken(
+  tokenAddress,
+  recipientAddress,
+  amount,
+  undefined,
+  {
+    feePerGas: "11000000000",
+    withRetry: true,
+    feeIncrementPercentage: 11,
+  }
+);
+
+console.log(`UserOpHash: ${res?.userOpHash}`);
+console.log("Waiting for transaction...");
+const receipt = await res?.wait();
+```
+
+  </Accordion>
+</AccordionGroup>
+
+## Migration guide
+
+### Migrating to v0.2 (EIP-4337 account abstraction)
+
+Version 0.2 aligns the SDK with EIP-4337 and introduces a single-step initialization that replaces the previous multi-step wallet creation flow.
+
+**What changed**
+
+- Smart wallet creation now happens automatically during `FuseSDK.init()`. You no longer need a separate authenticate-then-create-wallet sequence.
+- The top-level class is renamed from `FuseWalletSDK` to `FuseSDK`.
+- The wallet address accessor changes from `fuseWalletSDK.smartWallet.smartWalletAddress` to `fuseSDK.wallet.getSender()`.
+
+**Steps to migrate**
+
+<Steps>
+  <Step title="Remove the old initialization and wallet-creation code">
+    Delete the following calls from your existing code:
+
+    - `await fuseWalletSDK.authenticate(credentials);`
+    - `await fuseWalletSDK.createWallet();`
+    - The `onSmartWalletEvent` listener and all associated event handlers.
+  </Step>
+  <Step title="Replace the SDK constructor with FuseSDK.init()">
+
+    Old code:
+
+```typescript
+const FuseWalletSDK fuseWalletSDK = FuseWalletSDK(apiKey);
+```
+
+    New code:
+
+```typescript
+const fuseSDK = await FuseSDK.init(apiKey, credentials);
+```
+
+  </Step>
+  <Step title="Update the wallet address accessor">
+
+    Old accessor:
+
+```typescript
+console.log(fuseWalletSDK.smartWallet.smartWalletAddress);
+```
+
+    New accessor:
+
+```typescript
+console.log(fuseSDK.wallet.getSender());
+```
+
+  </Step>
+</Steps>
+
+### Migrating from Charge Wallet SDK to Smart Wallets SDK
+
+The Smart Wallets SDK shares the same underlying smart contract wallet architecture as the Charge Wallet SDK, so existing wallets are automatically accessible once a user re-imports their private key credentials. The following breaking changes apply.
+
+**Field name changes**
+
+| Old field | New field | Notes |
+| --- | --- | --- |
+| `accountAddress` | `ownerAddress` | Value is now EIP-55 checksummed |
+| `walletAddress` | `smartWalletAddress` | — |
+
+**Removed fields**
+
+The following fields no longer exist in the smart wallet schema: `backup`, `balancesOnForeign`, `apy`.
+
+**Deprecated APIs**
+
+| API | Replacement |
+| --- | --- |
+| Job API | SDK events (`transactionHash`, `transactionSucceeded`, `transactionFailed`) |
+| Sign-up / Login APIs | Implement your own auth and map wallets to users on your backend |
+| Backup API | Implement private key backup in your own app |
+| Contacts API | Implement contacts logic in your own app |
+
+**Migration path**
+
+To give existing Charge Wallet SDK users access to their wallets in the new SDK, have them import their original private key credentials into `FuseSDK.init()`. The SDK will derive the same smart wallet address as before.

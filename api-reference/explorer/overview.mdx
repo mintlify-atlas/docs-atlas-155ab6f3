@@ -1,0 +1,211 @@
+---
+title: "Explorer API reference: blockchain data"
+description: "Complete reference for the Fuse Explorer API: query account balances, transactions, token transfers, smart contracts, blocks, and on-chain statistics."
+---
+
+The Explorer API provides Etherscan-compatible REST endpoints for querying on-chain data from the Fuse blockchain. Use it to retrieve account balances, transaction histories, token transfers, contract ABIs, event logs, block data, and network statistics. The API follows the module-and-action query pattern used by Blockscout's JSON RPC v2 interface.
+
+## Base URL
+
+```
+https://api.fuse.io/api/v0/explorer
+```
+
+## Authentication
+
+All requests require a public API key passed as a query parameter:
+
+```
+?apiKey=YOUR_PUBLIC_API_KEY
+```
+
+Get your API key from the [Fuse Console](https://console.fuse.io/build).
+
+## Request pattern
+
+Explorer API endpoints use query parameters to specify the module and action:
+
+```
+GET /?module=<module>&action=<action>&apiKey=<key>&<params>
+```
+
+---
+
+## Account module
+
+### Get native balance from a block
+
+```
+GET /?module=account&action=eth_get_balance
+```
+
+<ParamField query="module" type="string" required>
+  Must be `account`.
+</ParamField>
+
+<ParamField query="action" type="string" required>
+  Must be `eth_get_balance`.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="address" type="string" required>
+  The wallet address to query.
+</ParamField>
+
+<ParamField query="block" type="string">
+  Block number as a string, or `latest`, `earliest`, or `pending`. Defaults to `latest`.
+</ParamField>
+
+#### Response
+
+<ResponseField name="id" type="integer">JSON-RPC response ID.</ResponseField>
+<ResponseField name="jsonrpc" type="string">JSON-RPC version string.</ResponseField>
+<ResponseField name="result" type="string">Balance in wei.</ResponseField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer/?module=account&action=eth_get_balance&address=0xYourAddress&block=latest&apiKey=YOUR_API_KEY"
+```
+
+---
+
+### Get native token balance
+
+```
+GET /?module=account&action=balance
+```
+
+Returns the current native FUSE token balance for an address.
+
+<ParamField query="module" type="string" required>Must be `account`.</ParamField>
+<ParamField query="action" type="string" required>Must be `balance`.</ParamField>
+<ParamField query="apiKey" type="string" required>Your public API key.</ParamField>
+<ParamField query="address" type="string" required>The wallet address to query.</ParamField>
+
+#### Response
+
+<ResponseField name="status" type="string">Response status (`1` for success).</ResponseField>
+<ResponseField name="message" type="string">Response message (e.g., `OK`).</ResponseField>
+<ResponseField name="result" type="string">Balance in wei as a string.</ResponseField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer/?module=account&action=balance&address=0xYourAddress&apiKey=YOUR_API_KEY"
+```
+
+---
+
+### Get balance for multiple addresses
+
+```
+GET /?module=account&action=balancemulti
+```
+
+<ParamField query="module" type="string" required>Must be `account`.</ParamField>
+<ParamField query="action" type="string" required>Must be `balancemulti`.</ParamField>
+<ParamField query="apiKey" type="string" required>Your public API key.</ParamField>
+<ParamField query="address" type="string" required>
+  Comma-separated list of addresses. Maximum 20 addresses per request.
+</ParamField>
+
+#### Response
+
+<ResponseField name="status" type="string">Response status.</ResponseField>
+<ResponseField name="message" type="string">Response message.</ResponseField>
+<ResponseField name="result" type="array">
+  Array of balance objects.
+
+  <ResponseField name="result[].account" type="string">Wallet address.</ResponseField>
+  <ResponseField name="result[].balance" type="string">Balance in wei.</ResponseField>
+  <ResponseField name="result[].stale" type="boolean">Whether the balance data may be stale.</ResponseField>
+</ResponseField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer/?module=account&action=balancemulti&address=0xAddr1,0xAddr2&apiKey=YOUR_API_KEY"
+```
+
+---
+
+### Get pending transactions for an address
+
+```
+GET /?module=account&action=pendingtxlist
+```
+
+<ParamField query="module" type="string" required>Must be `account`.</ParamField>
+<ParamField query="action" type="string" required>Must be `pendingtxlist`.</ParamField>
+<ParamField query="apiKey" type="string" required>Your public API key.</ParamField>
+<ParamField query="address" type="string" required>The wallet address to query.</ParamField>
+<ParamField query="page" type="integer">Page number for pagination. Must be used together with `offset`.</ParamField>
+<ParamField query="offset" type="integer">Number of transactions per page. Must be used together with `page`.</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer/?module=account&action=pendingtxlist&address=0xYourAddress&page=1&offset=25&apiKey=YOUR_API_KEY"
+```
+
+---
+
+### Get transactions by address
+
+```
+GET /?module=account&action=txlist
+```
+
+Returns normal (external) transactions for a given address.
+
+<ParamField query="module" type="string" required>Must be `account`.</ParamField>
+<ParamField query="action" type="string" required>Must be `txlist`.</ParamField>
+<ParamField query="apiKey" type="string" required>Your public API key.</ParamField>
+<ParamField query="address" type="string" required>The wallet address to query.</ParamField>
+<ParamField query="startblock" type="integer">Block number to start search from.</ParamField>
+<ParamField query="endblock" type="integer">Block number to stop search at.</ParamField>
+<ParamField query="page" type="integer">Page number for pagination.</ParamField>
+<ParamField query="offset" type="integer">Number of transactions per page.</ParamField>
+<ParamField query="sort" type="string">
+  Sort order: `asc` (ascending) or `desc` (descending). Default: `desc`.
+</ParamField>
+
+#### Response
+
+<ResponseField name="status" type="string">Response status.</ResponseField>
+<ResponseField name="message" type="string">Response message.</ResponseField>
+<ResponseField name="result" type="array">Array of transaction objects.</ResponseField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/explorer/?module=account&action=txlist&address=0xYourAddress&startblock=0&endblock=latest&sort=asc&apiKey=YOUR_API_KEY"
+```
+
+---
+
+## Available modules
+
+The Explorer API exposes endpoints across the following modules. Each module is accessed using `?module=<name>` with the appropriate `action` parameter.
+
+| Module | Description |
+|---|---|
+| `account` | Account balances, transaction lists, and token transfer history |
+| `block` | Block information and block reward details |
+| `contract` | Contract ABI, source code, and verification status |
+| `logs` | Event log filtering and retrieval |
+| `stats` | Network statistics including total supply and validator counts |
+| `token` | Token information, supply, and holder lists |
+| `transaction` | Transaction receipt status and error details |
+
+<Tip>
+  For full coverage of all module actions—including token transfers, internal transactions, contract ABI lookup, and log filtering—refer to the [Blockscout API documentation](https://docs.blockscout.com/devs/apis). The Fuse Explorer API is fully compatible with the Blockscout REST API v2.
+</Tip>
+
+## Blockscout Pro API
+
+For production applications requiring higher rate limits and multichain access, the [Blockscout Pro API](https://docs.blockscout.com/devs/pro-api) is available at the [Blockscout Developer Portal](https://dev.blockscout.com/). It supports REST API v2, JSON RPC v2, and ETH RPC API through a credit-based usage system with a free tier.

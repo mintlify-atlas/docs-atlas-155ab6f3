@@ -1,0 +1,91 @@
+---
+title: "Stake and delegate FUSE tokens"
+description: "Stake or delegate FUSE tokens to earn proportional block rewards on Fuse Network, and withdraw at any time via the staking platform."
+---
+
+Fuse Network uses Delegated Proof of Stake (DPoS), which means that anyone holding FUSE tokens can participate in securing the network — either by running a validator node or by delegating tokens to an existing validator. Delegation lets token holders earn block rewards without the overhead of operating infrastructure.
+
+## How delegation works
+
+A delegator trustlessly lends their staked FUSE tokens to a validator of their choice. The delegated stake is counted as part of that validator's total stake, increasing its weight in the network and improving the validator's chance of being selected during the next cycle snapshot.
+
+Rewards earned by the validator are split proportionally:
+
+- **Delegators** receive a share proportional to their delegated amount, **minus the validator's fee**.
+- **Validators** keep their fee on top of their own stake-proportional rewards.
+
+<Note>
+  The minimum validator fee is **15%**. This floor was chosen to reduce the risk of validator consolidation from a race to offer the lowest fee.
+</Note>
+
+## Reward distribution
+
+Block rewards come from two sources:
+
+1. **5% yearly inflation** minted by the BlockReward contract and distributed each block.
+2. **Transaction fees** paid by users for transactions included in the block.
+
+Both sources are distributed in proportion to stake. If your delegated stake represents 10% of a validator's total stake, you receive approximately 10% of that validator's reward share (after the validator's fee).
+
+## Minimum delegation
+
+There is no protocol-enforced minimum delegation amount beyond the practical requirement that the target validator must maintain at least 100,000 FUSE total stake to remain in (or enter) the active validator set. Delegating even small amounts increases a validator's stake and contributes to its selection probability.
+
+<Tip>
+  Choose validators with strong uptime and a competitive fee. Validators that are frequently jailed do not earn rewards during their jail period, which means their delegators also receive no rewards for that time.
+</Tip>
+
+## How to stake and delegate
+
+The easiest way to stake or delegate is through the [Fuse Staking platform](https://staking.fuse.io), which provides a user interface for:
+
+- Browsing the current validator set and their fees
+- Delegating FUSE to one or more validators
+- Tracking accumulated rewards
+- Withdrawing stake
+
+To delegate directly via the Consensus contract, call the `delegate` function on contract address `0x3014ca10b91cb3D0AD85fEf7A3Cb95BCAc9c0f79` on Fuse Network, passing the target validator's address as the parameter.
+
+## How to withdraw stake
+
+Both validators and delegators can withdraw their FUSE tokens at any time, up to the amount they have staked or delegated. Withdrawals are processed through the Consensus contract.
+
+<Warning>
+  If a validator's total stake falls below 100,000 FUSE after a withdrawal, the validator is removed from the active validator set. Delegators should monitor their validator's total stake when withdrawing large amounts.
+</Warning>
+
+There are two ways to withdraw:
+
+- **Withdraw your own stake**: Call `withdraw(amount)` on the [Consensus contract](https://explorer.fuse.io/address/0x3014ca10b91cb3d0ad85fef7a3cb95bcac9c0f79). This reduces the stake of the calling address.
+- **Withdraw delegated stake**: Call `withdraw(validatorAddress, amount)` on the Consensus contract, specifying both the validator you delegated to and the amount to withdraw.
+
+Validators that have been jailed cannot withdraw their stake for **several days** after jailing.
+
+## End-of-cycle flow
+
+Each cycle lasts approximately **34,560 blocks (~2 days)**. At the end of every cycle, the following sequence runs automatically:
+
+<Steps>
+  <Step title="BlockReward triggers cycle end">
+    The `BlockReward.reward` function is called every block. When the cycle ends, it calls `Consensus.cycle`, which sets flags indicating that the cycle is complete and rewards should be emitted.
+  </Step>
+  <Step title="Validator app emits cycle events">
+    The `fuse-validator-app` running on each validator VM detects the cycle-end flags and submits two transactions:
+    - `Consensus.emitInitiateChange` — signals a new validator set
+    - `BlockReward.emitRewardedOnCycle` — signals that rewards should be distributed
+
+    Only the first validator to submit succeeds; the others fail gracefully because these are zero-gas transactions.
+  </Step>
+  <Step title="Bridge oracles collect signatures">
+    Bridge oracles (`fuseoracle-initiate-change` and `fuseoracle-rewarded-on-cycle`) listen for the emitted events. All validators submit their signatures to the HomeBridge contract on Fuse Network. Once a majority of validators have signed, a `CollectedSignatures` event is emitted.
+  </Step>
+  <Step title="Mainnet transactions finalize the cycle">
+    The validator that submitted the final signature transmits two transactions to the Ethereum mainnet:
+    1. An update to the validator set on the ForeignBridge contract
+    2. A minting transaction for newly issued FUSE tokens created during the cycle
+  </Step>
+</Steps>
+
+<Info>
+  If the validator set update transaction on mainnet fails, the minting transaction may also fail because the bridge verifies that all signatures belong to the current known validator set. This is a known edge case when new validators are added mid-cycle.
+</Info>

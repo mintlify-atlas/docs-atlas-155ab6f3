@@ -1,0 +1,292 @@
+---
+title: "Staking API reference: validators and rewards"
+description: "Complete reference for the Fuse Staking API: retrieve staking options, stake and unstake tokens, and query staked balances and rewards by wallet."
+---
+
+The Staking API provides endpoints for managing token staking on the Fuse Network. Use it to discover available staking options with APR and TVL data, stake or unstake tokens from a wallet, and query the staked balances and earned rewards for any address. All staking actions return encoded contract call data that your application submits on-chain.
+
+## Base URL
+
+```
+https://api.fuse.io/api/v0/staking
+```
+
+## Authentication
+
+All requests require a public API key passed as a query parameter:
+
+```
+?apiKey=YOUR_PUBLIC_API_KEY
+```
+
+Get your API key from the [Fuse Console](https://console.fuse.io/build).
+
+---
+
+## GET /staking_options
+
+Returns all available staking options on Fuse Network, including token details, APR, TVL, and staking provider information.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+### Response
+
+An array of staking option objects.
+
+<ResponseField name="[].tokenAddress" type="string">
+  Contract address of the token that can be staked.
+</ResponseField>
+
+<ResponseField name="[].tokenSymbol" type="string">
+  Symbol of the stakeable token (e.g., `FUSE`).
+</ResponseField>
+
+<ResponseField name="[].tokenName" type="string">
+  Full name of the stakeable token.
+</ResponseField>
+
+<ResponseField name="[].tokenLogoURI" type="string">
+  URL of the token's logo image.
+</ResponseField>
+
+<ResponseField name="[].unStakeTokenAddress" type="string">
+  Contract address of the token received when unstaking (receipt token).
+</ResponseField>
+
+<ResponseField name="[].stakingProviderId" type="string">
+  Unique identifier for the staking provider or contract.
+</ResponseField>
+
+<ResponseField name="[].expired" type="boolean">
+  Whether this staking option has expired and is no longer accepting new stakes.
+</ResponseField>
+
+<ResponseField name="[].stakingApr" type="number">
+  Annual percentage rate for staking rewards, expressed as a decimal (e.g., `0.12` for 12%).
+</ResponseField>
+
+<ResponseField name="[].tvl" type="number">
+  Total value locked in this staking option, in USD.
+</ResponseField>
+
+### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/staking/staking_options?apiKey=YOUR_API_KEY"
+```
+
+```json
+[
+  {
+    "tokenAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    "tokenSymbol": "FUSE",
+    "tokenName": "Fuse",
+    "tokenLogoURI": "https://example.com/fuse-logo.png",
+    "unStakeTokenAddress": "0xUnstakeTokenAddress",
+    "stakingProviderId": "fuse-validator-pool",
+    "expired": false,
+    "stakingApr": 0.12,
+    "tvl": 5000000
+  }
+]
+```
+
+---
+
+## POST /stake
+
+Stakes a specified amount of tokens from a wallet. Returns the contract address and encoded ABI call data to submit on-chain.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+### Request body
+
+<ParamField body="accountAddress" type="string" required>
+  The wallet address that will stake the tokens.
+</ParamField>
+
+<ParamField body="tokenAmount" type="string" required>
+  The amount of tokens to stake, in base units (before applying decimals).
+</ParamField>
+
+<ParamField body="tokenAddress" type="string" required>
+  The contract address of the token to stake. Use the `tokenAddress` from the `/staking_options` response.
+</ParamField>
+
+### Response
+
+<ResponseField name="contractAddress" type="string">
+  The staking contract address to send the transaction to.
+</ResponseField>
+
+<ResponseField name="encodedABI" type="string">
+  The ABI-encoded call data for the staking transaction. Pass this as the `data` field in the transaction.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST "https://api.fuse.io/api/v0/staking/stake?apiKey=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountAddress": "0xYourWalletAddress",
+    "tokenAmount": "1000000000000000000",
+    "tokenAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+  }'
+```
+
+```json
+{
+  "contractAddress": "0xStakingContractAddress",
+  "encodedABI": "0xabcdef1234567890..."
+}
+```
+
+<Info>
+  After receiving the `contractAddress` and `encodedABI`, submit the transaction from your application using your Web3 provider. The `accountAddress` must have sufficient token balance to complete the stake.
+</Info>
+
+---
+
+## POST /unstake
+
+Unstakes a specified amount of previously staked tokens and returns them to the wallet. Returns encoded contract call data.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+### Request body
+
+<ParamField body="accountAddress" type="string" required>
+  The wallet address that holds the staked tokens.
+</ParamField>
+
+<ParamField body="tokenAmount" type="string" required>
+  The amount of staked tokens to withdraw, in base units.
+</ParamField>
+
+<ParamField body="tokenAddress" type="string" required>
+  The contract address of the original staked token.
+</ParamField>
+
+### Response
+
+<ResponseField name="contractAddress" type="string">
+  The staking contract address to send the unstake transaction to.
+</ResponseField>
+
+<ResponseField name="encodedABI" type="string">
+  The ABI-encoded call data for the unstaking transaction.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST "https://api.fuse.io/api/v0/staking/unstake?apiKey=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "accountAddress": "0xYourWalletAddress",
+    "tokenAmount": "1000000000000000000",
+    "tokenAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+  }'
+```
+
+```json
+{
+  "contractAddress": "0xStakingContractAddress",
+  "encodedABI": "0xfedcba0987654321..."
+}
+```
+
+---
+
+## GET /staked_tokens/{accountAddress}
+
+Returns the staking summary for a specific wallet address, including total value staked, total earned rewards, and per-token staking details.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="accountAddress" type="string" required>
+  The wallet address to query staked token information for.
+</ParamField>
+
+### Response
+
+<ResponseField name="totalStakedAmountUSD" type="number">
+  Total value of all staked tokens for this address, denominated in USD.
+</ResponseField>
+
+<ResponseField name="totalEarnedAmountUSD" type="number">
+  Total value of staking rewards earned by this address, denominated in USD.
+</ResponseField>
+
+<ResponseField name="stakedTokens" type="array">
+  Array of staking option objects representing each active stake. Each object has the same structure as entries in the `/staking_options` response, with the addition of the staked balance.
+
+  <ResponseField name="stakedTokens[].tokenAddress" type="string">Token contract address.</ResponseField>
+  <ResponseField name="stakedTokens[].tokenSymbol" type="string">Token symbol.</ResponseField>
+  <ResponseField name="stakedTokens[].tokenName" type="string">Token name.</ResponseField>
+  <ResponseField name="stakedTokens[].stakingApr" type="number">Annual percentage rate for rewards.</ResponseField>
+  <ResponseField name="stakedTokens[].tvl" type="number">Total value locked in this staking option.</ResponseField>
+  <ResponseField name="stakedTokens[].stakingProviderId" type="string">Staking provider identifier.</ResponseField>
+  <ResponseField name="stakedTokens[].expired" type="boolean">Whether this staking option has expired.</ResponseField>
+</ResponseField>
+
+### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/staking/staked_tokens/0xYourWalletAddress?apiKey=YOUR_API_KEY"
+```
+
+```json
+{
+  "totalStakedAmountUSD": 1500.00,
+  "totalEarnedAmountUSD": 48.75,
+  "stakedTokens": [
+    {
+      "tokenAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+      "tokenSymbol": "FUSE",
+      "tokenName": "Fuse",
+      "stakingApr": 0.12,
+      "tvl": 5000000,
+      "stakingProviderId": "fuse-validator-pool",
+      "expired": false
+    }
+  ]
+}
+```
+
+---
+
+## Error responses
+
+<ResponseField name="statusCode" type="integer">
+  HTTP status code of the error.
+</ResponseField>
+
+<ResponseField name="errorMessage" type="string">
+  Human-readable error description.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Short error code.
+</ResponseField>
+
+| Status | Meaning |
+|---|---|
+| 403 | Forbidden — invalid or missing API key |

@@ -1,0 +1,75 @@
+---
+title: "FuseBox APIs: services overview and authentication guide"
+description: "FuseBox exposes a suite of REST APIs for building on Fuse. Learn about the base URL, API key authentication, and all available services."
+---
+
+The FuseBox platform provides a collection of REST APIs that cover everything from smart wallet management and token balances to DEX trading, blockchain analytics, webhook notifications, and token staking. All APIs share a single base URL and use an API key for authentication, so once you have your key you can start calling any endpoint in the suite.
+
+## Base URL
+
+All API calls are made over HTTPS to the production server:
+
+```
+https://api.fuse.io
+```
+
+Individual APIs are versioned and namespaced beneath this root. For example, the Smart Wallets API lives at `https://api.fuse.io/api/v2/smart-wallets` and the Balances API at `https://api.fuse.io/api/v0/balances`.
+
+## Authentication
+
+Every request must include your public API key. Pass it as a query parameter named `apiKey`:
+
+```
+GET https://api.fuse.io/api/v0/balances/assets/0xABC...?apiKey=YOUR_API_KEY
+```
+
+The Notification API additionally requires a secret key sent in the `API-SECRET` request header, alongside the `apiKey` query parameter. The Smart Wallets API issues a short-lived JWT after the initial authentication call; subsequent calls to protected endpoints use a `Bearer` token in the `Authorization` header.
+
+Get your API keys from the [Fuse Console](https://console.fuse.io/build).
+
+<Note>All API calls must be made over HTTPS. HTTP requests will be rejected.</Note>
+
+## Available APIs
+
+<CardGroup cols={2}>
+  <Card title="Smart Wallet API" icon="wallet" href="/developers/apis/smart-wallet-api">
+    Create and manage ERC-4337 smart contract wallets. Authenticate users, relay gasless transactions, and fetch wallet action history.
+  </Card>
+  <Card title="Balances API" icon="coins" href="/developers/apis/balances-api">
+    Query ERC-20 fungible token balances and ERC-721/ERC-1155 NFT holdings for any wallet address on the Fuse network.
+  </Card>
+  <Card title="Trade API" icon="arrow-right-arrow-left" href="/developers/apis/trade-api">
+    Integrate DEX trading powered by Voltage Finance. Fetch token prices, price change data, and obtain swap quotes or indicative prices.
+  </Card>
+  <Card title="Notification API" icon="bell" href="/developers/apis/notification-api">
+    Subscribe to real-time blockchain events via webhooks. Monitor native FUSE transfers, ERC-20 transfers, and NFT transfers for any address.
+  </Card>
+  <Card title="Explorer API" icon="magnifying-glass" href="/developers/apis/explorer-api">
+    Query blockchain data including transactions, balances, blocks, token analytics, and smart contract information on Fuse.
+  </Card>
+  <Card title="Staking API" icon="layer-group" href="/developers/apis/staking-api">
+    Manage token staking on the Fuse network. Retrieve staking options, stake or unstake tokens, and query staked balances by wallet.
+  </Card>
+</CardGroup>
+
+## Common response patterns
+
+All APIs return JSON responses. Successful responses use standard HTTP 2xx status codes. Errors follow a consistent shape:
+
+```json
+{
+  "statusCode": 403,
+  "errorMessage": "Forbidden resource",
+  "error": "Forbidden"
+}
+```
+
+| HTTP status | Meaning |
+|---|---|
+| `200` | Request succeeded |
+| `201` | Resource created successfully |
+| `400` | Bad request — check your request body or query parameters |
+| `401` | Unauthorized — missing or invalid JWT token |
+| `403` | Forbidden — invalid or missing API key |
+
+Paginated endpoints return a `docs` array along with pagination metadata. Cursor-based endpoints (such as the NFT Balances endpoint) return a `nextCursor` field that you pass in the next request to fetch the following page.

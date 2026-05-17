@@ -1,0 +1,84 @@
+---
+title: "How Fuse Network consensus works"
+description: "Fuse uses Delegated Proof of Stake with AuRa round-robin block signing to deliver 5-second blocks, fast finality, and up to 100 validators."
+---
+
+Fuse Network reaches agreement on the state of the ledger through a Delegated Proof of Stake (DPoS) consensus model built on top of the AuRa (Authority Round) algorithm. Rather than competing through raw computing power, validators lock up FUSE tokens as economic collateral, giving them the right to produce blocks and earn rewards proportional to their stake.
+
+## DPoS consensus
+
+In standard Proof of Stake, validators are selected and take turns updating the network's state. DPoS extends this by introducing **delegators** — FUSE token holders who do not run a node themselves but lend their stake to a validator of their choice, increasing that validator's weight in the network.
+
+Both validators and delegators receive block rewards proportional to their stake. This design lets smaller token holders participate in securing the network without needing to operate infrastructure.
+
+On-chain governance gives validators the ability to vote on the core network contracts that control staking mechanics, validator set selection, block rewards logic, and the governance process itself.
+
+## AuRa block production
+
+Fuse Network's consensus algorithm is based on **AuRa (Authority Round)**, originally developed by the OpenEthereum (formerly Parity) team. AuRa integrates on-chain validator set selection and block rewards logic through smart contracts, which Fuse extends with upgradeable proxy contracts.
+
+<Info>
+  The Fuse Network smart contracts are open source and available in the [fuse-network repository](https://github.com/fuseio/fuse-network).
+</Info>
+
+### Round-robin signing
+
+The active validator set takes turns in a **round-robin** fashion to sign and confirm blocks. When a validator signs a block it is broadcast to all network participants. Every node verifies the signature and appends the block to its local state, confirming the block.
+
+### Block time and finality
+
+New blocks are produced every **5 seconds**. Each validator has a time window per round to publish its block and collect the reward. Although theoretical finality in AuRa can require multiple confirmations, for practical purposes a transaction on Fuse Network can be considered **finalized after a single block confirmation**.
+
+<CardGroup cols={2}>
+  <Card title="Block time" icon="clock">
+    5 seconds per block
+  </Card>
+  <Card title="Practical finality" icon="check">
+    1 block confirmation
+  </Card>
+  <Card title="Cycle duration" icon="arrow-rotate-right">
+    34,560 blocks (~2 days)
+  </Card>
+  <Card title="Max validators" icon="users">
+    100 active validators
+  </Card>
+</CardGroup>
+
+## Validator selection
+
+The Consensus contract (`0x3014ca10b91cb3d0ad85fef7a3cb95bcac9c0f79`) stores the current validator set and selects a new set at the end of each cycle. The selection logic picks a **random snapshot** from snapshots taken throughout the cycle of pending validators whose total stake (own stake plus delegated stake) meets the minimum threshold.
+
+A new cycle begins every 34,560 blocks (approximately two days). At cycle end the BlockReward contract triggers the snapshot and cycle logic, and the new validator set is propagated to both the Fuse network and Ethereum mainnet via the bridge.
+
+<Note>
+  The minimum stake to be eligible for the validator set is **100,000 FUSE**. The maximum stake per node is **5,000,000 FUSE**.
+</Note>
+
+## Core network contracts
+
+| Contract | Address | Role |
+|---|---|---|
+| Consensus | [`0x3014...0f79`](https://explorer.fuse.io/address/0x3014ca10b91cb3d0ad85fef7a3cb95bcac9c0f79) | Manages validators, delegators, staking, and cycle snapshots |
+| BlockReward | [`0x63D4...C9B`](https://explorer.fuse.io/address/0x63d4efed2e3da070247bea3073bcab896dff6c9b) | Calculates and distributes rewards; triggers cycle logic |
+| Voting | [`0x4c88...484`](https://explorer.fuse.io/address/0x4c889f137232E827c00710752E86840805A70484) | Opens ballots and tallies validator votes on contract upgrades |
+| Proxy Storage | [`0x23D8...333`](https://explorer.fuse.io/address/0x23D8634ED1B2662dC96FcE6208fde93258731333) | Holds implementation addresses; upgraded only through voting |
+
+## Misbehavior and jailing
+
+Validators that violate consensus rules — for example by producing invalid blocks or failing to publish blocks during their assigned slot — can be **jailed**. A jailed validator:
+
+- Cannot produce blocks and therefore receives no block rewards.
+- Cannot withdraw their staked FUSE for several days.
+
+<Warning>
+  Jailing creates a strong financial incentive for validators to remain online and follow protocol rules at all times.
+</Warning>
+
+## Network performance
+
+Fuse Network is designed for high-throughput payment and transaction use cases. The combination of AuRa's deterministic block production and DPoS's focused validator set yields predictable, low-latency performance:
+
+- **Throughput**: fast transaction processing suitable for payment applications
+- **Finality**: single-block practical finality (~5 seconds)
+- **Sybil resistance**: minimum stake requirement prevents cheap identity duplication across validators
+- **Yearly inflation**: 5% distributed as block rewards to validators and delegators

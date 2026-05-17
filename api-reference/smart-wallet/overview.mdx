@@ -1,0 +1,210 @@
+---
+title: "Smart Wallet API reference"
+description: "Complete reference for the Fuse Smart Wallets API: authenticate users, create ERC-4337 smart wallets, relay gasless transactions, and fetch wallet history."
+---
+
+The Smart Wallets API provides a Wallets-as-a-Service (WaaS) backend for cross-platform applications. It lets you authenticate users using their Externally Owned Accounts (EOAs), create non-custodial smart contract wallets deployed on Fuse, execute gasless transactions through the relay service, and retrieve wallet balances and transaction history. Each wallet is an upgradable smart contract where the owner retains full control by signing messages sent to the relayer.
+
+## Base URL
+
+```
+https://api.fuse.io/api/v2/smart-wallets
+```
+
+## Authentication
+
+All requests require a **public API key** passed as a query parameter.
+
+```
+?apiKey=YOUR_PUBLIC_API_KEY
+```
+
+Get your API key from the [Fuse Console](https://console.fuse.io/build).
+
+Endpoints that operate on wallet data additionally require a **Bearer JWT** in the `Authorization` header. Obtain the JWT by calling the `/auth` endpoint first.
+
+```
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+---
+
+## POST /auth
+
+Authenticates a user using the [EIP-191](https://eips.ethereum.org/EIPS/eip-191) signed data standard and returns a JWT for subsequent requests.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+### Request body
+
+<ParamField body="hash" type="string" required>
+  The hash of the signed message, conforming to EIP-191.
+</ParamField>
+
+<ParamField body="signature" type="string" required>
+  The signature produced by the EOA owner signing the hash.
+</ParamField>
+
+<ParamField body="ownerAddress" type="string" required>
+  The Ethereum address of the wallet owner (the EOA that produced the signature).
+</ParamField>
+
+<ParamField body="smartWalletAddress" type="string">
+  Optional. The address of an existing smart wallet to associate with this session. If omitted, a new smart wallet will be created or the existing wallet for the owner will be resolved.
+</ParamField>
+
+### Response
+
+<ResponseField name="jwt" type="string">
+  A JWT token to use as the Bearer token for authenticated endpoints. This token encodes the owner's identity and wallet association.
+</ResponseField>
+
+### Example
+
+```bash
+curl -X POST "https://api.fuse.io/api/v2/smart-wallets/auth?apiKey=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hash": "0xabc123...",
+    "signature": "0xdef456...",
+    "ownerAddress": "0xYourOwnerAddress"
+  }'
+```
+
+```json
+{
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+---
+
+## GET /actions
+
+Returns a paginated list of wallet actions (transactions) associated with the authenticated smart wallet.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="10">
+  Number of actions to return per page.
+</ParamField>
+
+<ParamField query="tokenAddress" type="string">
+  Optional. Filter actions by a specific token contract address.
+</ParamField>
+
+### Response
+
+<ResponseField name="docs" type="array">
+  Array of action objects representing wallet transactions.
+
+  <ResponseField name="docs[].\_id" type="string">
+    Unique identifier for the action record.
+  </ResponseField>
+
+  <ResponseField name="docs[].walletAddress" type="string">
+    The smart wallet address that performed or received the action.
+  </ResponseField>
+
+  <ResponseField name="docs[].name" type="string">
+    Human-readable name for the action type (e.g., `tokenTransfer`).
+  </ResponseField>
+
+  <ResponseField name="docs[].status" type="string">
+    Current status of the transaction: `pending`, `confirmed`, or `failed`.
+  </ResponseField>
+
+  <ResponseField name="docs[].userOpHash" type="string">
+    The ERC-4337 UserOperation hash for the action.
+  </ResponseField>
+
+  <ResponseField name="docs[].txHash" type="string">
+    The on-chain transaction hash once the UserOperation is included in a block.
+  </ResponseField>
+
+  <ResponseField name="docs[].received" type="array">
+    Tokens received in this action.
+
+    <ResponseField name="docs[].received[].name" type="string">Token name.</ResponseField>
+    <ResponseField name="docs[].received[].symbol" type="string">Token symbol.</ResponseField>
+    <ResponseField name="docs[].received[].address" type="string">Token contract address.</ResponseField>
+    <ResponseField name="docs[].received[].decimals" type="integer">Token decimals.</ResponseField>
+    <ResponseField name="docs[].received[].value" type="string">Transfer amount in base units.</ResponseField>
+    <ResponseField name="docs[].received[].type" type="string">Token type, e.g. `ERC20` or `NATIVE`.</ResponseField>
+    <ResponseField name="docs[].received[].to" type="string">Recipient address, nullable.</ResponseField>
+  </ResponseField>
+
+  <ResponseField name="docs[].sent" type="array">
+    Tokens sent in this action. Same structure as `received`.
+  </ResponseField>
+</ResponseField>
+
+### Example
+
+```bash
+curl "https://api.fuse.io/api/v2/smart-wallets/actions?apiKey=YOUR_API_KEY&page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+```json
+{
+  "docs": [
+    {
+      "_id": "64a1f2c3e4b5d6789abc1234",
+      "walletAddress": "0xSmartWalletAddress",
+      "name": "tokenTransfer",
+      "status": "confirmed",
+      "userOpHash": "0xuserop...",
+      "txHash": "0xtxhash...",
+      "received": [],
+      "sent": [
+        {
+          "name": "Fuse",
+          "symbol": "FUSE",
+          "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+          "decimals": 18,
+          "value": "1000000000000000000",
+          "type": "NATIVE",
+          "to": "0xRecipientAddress"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Error responses
+
+All endpoints return structured error responses.
+
+<ResponseField name="statusCode" type="integer">
+  HTTP status code of the error.
+</ResponseField>
+
+<ResponseField name="errorMessage" type="string">
+  Human-readable description of the error.
+</ResponseField>
+
+<ResponseField name="path" type="string">
+  The request path that produced the error.
+</ResponseField>
+
+| Status | Meaning |
+|---|---|
+| 400 | Bad Request — invalid or missing request parameters |
+| 401 | Unauthorized — missing or invalid JWT token |
+| 403 | Forbidden — invalid or missing API key |

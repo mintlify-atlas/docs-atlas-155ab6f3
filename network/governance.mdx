@@ -1,0 +1,98 @@
+---
+title: "Fuse Network on-chain governance"
+description: "Fuse validators govern the network through on-chain voting on FIPs, controlling upgrades to staking, block rewards, and validator set contracts."
+---
+
+Fuse Network governance is on-chain, meaning that changes to core network contracts are decided by validator votes rather than by a centralized authority. Any validator can open a ballot proposing a new contract implementation, and the outcome is enforced automatically by the protocol once the vote closes.
+
+## Governance actors
+
+Governance is currently shared between three groups:
+
+**Network validators** vote on [Fuse Improvement Proposals (FIPs)](#fuse-improvement-proposals-fips) and on ballots to upgrade core contracts. Every validator has one vote regardless of stake size.
+
+**Fuse Foundation and project team** — Gibraltar-incorporated Fuse Network Limited — manages the core network protocol development and the Fuse treasury (primarily undistributed genesis FUSE supply). The project team implements network protocol updates that validators adopt and maintains the full-node software. No permission from the project team is needed to build on or integrate with Fuse.
+
+**The broader community** can participate by submitting FIPs, commenting on proposals, and delegating stake to validators whose governance positions they support.
+
+## What can be governed
+
+The Voting contract (`0x4c889f137232E827c00710752E86840805A70484`) controls upgrades to four contract types:
+
+| Contract type | ID | What it controls |
+|---|---|---|
+| Consensus | 1 | Validator set selection, staking mechanics, delegation |
+| BlockReward | 2 | Yearly inflation rate, reward distribution logic |
+| ProxyStorage | 3 | Implementation addresses for all core contracts |
+| Voting | 4 | The governance process itself |
+
+<Note>
+  All core contracts use upgradeable proxy patterns. Changing an implementation requires a successful ballot — no admin key can bypass the voting process.
+</Note>
+
+## Fuse Improvement Proposals (FIPs)
+
+A FIP is a design document that describes a new feature or change to the Fuse Network. FIPs provide motivation, technical specifications, and context for the community. See [FIP-1](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-1.md) for the full process definition.
+
+| FIP | Description | Status |
+|---|---|---|
+| [FIP-1](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-1.md) | Introduction and explanation of the FIP process | Done |
+| [FIP-2](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-2.md) | Enabling delegation of FUSE tokens to validators | Done |
+| [FIP-3](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-3.md) | Lowering the minimum stake to run a validator node to 100K FUSE | Done |
+| [FIP-4](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-4.md) | Multi-validators: validators can run multiple nodes | Undone |
+| [FIP-5](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-5.md) | Validator key splitting: separated keys per validator | Undone |
+| [FIP-6](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-6.md) | Bridge implementation changeable by voting | Undone |
+| [FIP-7](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-7.md) | Tiny Ethereum Network transactions on end of cycle | Undone |
+| [FIP-8](https://github.com/fuseio/FIPs/blob/master/FIPS/fip-8.md) | Adjusting block rewards by the validator's stake | Done |
+
+## How on-chain voting works
+
+Validators interact with the [Voting contract](https://explorer.fuse.io/address/0x4c889f137232E827c00710752E86840805A70484) to open and vote on ballots.
+
+### Ballot parameters
+
+| Parameter | Description | Constraints |
+|---|---|---|
+| `startAfterNumberOfCycles` | Cycles to wait before voting opens | Minimum 1 |
+| `cyclesDuration` | How long the ballot remains open | Minimum 2, maximum 14 cycles |
+| `contractType` | Which contract the ballot targets | 1–4 (see table above) |
+| `proposedValue` | Address of the new contract implementation | Must be a deployed contract |
+| `description` | Human-readable reason for the change | Free text |
+
+<Info>
+  Maximum open ballots across the network: 100. Maximum open ballots per validator: 100 ÷ number of active validators.
+</Info>
+
+### Participating in governance
+
+<Steps>
+  <Step title="Deploy a new contract implementation">
+    Write, test, and deploy the new implementation contract to Fuse Network. Record its address — this becomes the `proposedValue` in your ballot.
+  </Step>
+  <Step title="Open a ballot">
+    As a validator, call `newBallot` on the [Voting contract](https://explorer.fuse.io/address/0x4c889f137232E827c00710752E86840805A70484) with the parameters above. The ballot opens for voting after `startAfterNumberOfCycles` cycles have passed.
+  </Step>
+  <Step title="Vote on open ballots">
+    Any address can call `vote(id, choice)` on the Voting contract while a ballot is open:
+    - `choice = 1` — accept
+    - `choice = 2` — reject
+
+    Everyone can vote, but **only validator votes count** toward the final result when the ballot closes.
+  </Step>
+  <Step title="Check the outcome">
+    After the ballot closes (at cycle end), call `getQuorumState(id)` to retrieve the result:
+    - `1` — in progress
+    - `2` — accepted
+    - `3` — rejected
+
+    Use `getAccepted(id)` and `getRejected(id)` to see the vote tallies.
+  </Step>
+</Steps>
+
+<Warning>
+  Ballots open and close at cycle boundaries. A ballot opened mid-cycle will not begin accepting votes until at least one full cycle has passed. Plan proposal timelines accordingly.
+</Warning>
+
+## Checking active ballots
+
+Call `activeBallots()` on the Voting contract to retrieve an array of currently open ballot IDs. Use `getBallotInfo(id, address)` to inspect the details and current vote state of any ballot.

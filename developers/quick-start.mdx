@@ -1,0 +1,179 @@
+---
+title: "Fuse developer quick start guide"
+description: "Configure your toolchain for Fuse, deploy a Solidity contract with Hardhat, and connect to FuseBox SDK to serve your users in minutes."
+---
+
+Fuse is an EVM-compatible blockchain with 5-second block times and ~10 GWei gas. This guide covers the network details you need, how to deploy a Solidity contract using Hardhat, and how to connect to the FuseBox SDK once your contract is live.
+
+## Network details
+
+| | Fuse Mainnet | Fuse Testnet (Sparknet) |
+| :--- | :--- | :--- |
+| **Chain ID** | 122 | 123 |
+| **RPC** | https://rpc.fuse.io | https://rpc.fusespark.io |
+| **Symbol** | FUSE | FUSE |
+| **Explorer** | https://explorer.fuse.io | https://explorer.fusespark.io |
+| **WebSocket** | wss://explorer-node.fuse.io/ws | wss://explorernode.fusespark.io/ws |
+| **Health** | https://health.fuse.io | https://health.fusespark.io |
+| **Block size** | 20,000,000 | 20,000,000 |
+| **Block speed** | 5 seconds | 5 seconds |
+| **Gas price** | 10 GWei | 10 GWei |
+| **Faucet** | [Stakely](https://stakely.io/faucet/fuse-fuse) | [ChainDrop](https://chaindrop.org/?chainid=123&token=0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee), [Stakely](https://stakely.io/en/faucet/fuse-fuse) |
+
+## Core network contracts
+
+The following contracts govern consensus, block rewards, and on-chain governance on Fuse Mainnet.
+
+| Contract | Address |
+| :--- | :--- |
+| **Core Consensus** | [0x3014ca10b91cb3D0AD85fEf7A3Cb95BCAc9c0f79](https://explorer.fuse.io/address/0x3014ca10b91cb3D0AD85fEf7A3Cb95BCAc9c0f79) |
+| **BlockReward** | [0x63D4efeD2e3dA070247bea3073BCaB896dFF6C9B](https://explorer.fuse.io/address/0x63D4efeD2e3dA070247bea3073BCaB896dFF6C9B) |
+| **Voting** | [0x4c889f137232E827c00710752E86840805A70484](https://explorer.fuse.io/address/0x4c889f137232E827c00710752E86840805A70484) |
+
+## Deploy a smart contract with Hardhat
+
+Fuse is EVM-compatible, so any Solidity contract compiles and deploys without modification. The steps below use Hardhat's Ignition deployment system to deploy an ERC-20 token to Fuse.
+
+<Steps>
+  <Step title="Create and initialise the project">
+    Open a terminal and scaffold a new Hardhat project:
+
+    ```bash
+    mkdir hardhat-fuse-guide && cd hardhat-fuse-guide
+    npm init -y
+    npx hardhat init
+    ```
+
+    When prompted, accept the sample project defaults and install dependencies including `hardhat` and `@nomicfoundation/hardhat-toolbox`.
+
+    ```bash
+    npm install --save-dev hardhat
+    npm install --save-dev @nomicfoundation/hardhat-toolbox
+    ```
+  </Step>
+
+  <Step title="Write the contract">
+    Inside the `contracts/` folder, delete the default `Lock.sol` and create `Token.sol` with the following content:
+
+    ```solidity
+    // SPDX-License-Identifier: MIT
+    pragma solidity ^0.8.0;
+
+    import "@openzeppelin/contracts@4.0.0/token/ERC20/ERC20.sol";
+    import "@openzeppelin/contracts@4.0.0/token/ERC20/extensions/ERC20Burnable.sol";
+    import "@openzeppelin/contracts@4.0.0/access/Ownable.sol";
+
+    contract MyToken is ERC20, ERC20Burnable, Ownable {
+        constructor(address initialOwner)
+            ERC20("MyToken", "MTK")
+            Ownable()
+        {}
+
+        function mint(address to, uint256 amount) public onlyOwner {
+            _mint(to, amount);
+        }
+    }
+    ```
+  </Step>
+
+  <Step title="Compile">
+    ```bash
+    npx hardhat compile
+    ```
+
+    A successful compile returns:
+
+    ```
+    Compiling...
+    Compiled 1 contract successfully
+    ```
+  </Step>
+
+  <Step title="Create the Ignition deployment module">
+    Create `ignition/modules/deploy.js` and paste the following:
+
+    ```javascript
+    const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
+
+    const Token = buildModule("Token", (m) => {
+      const contract = m.contract("Token");
+      return { contract };
+    });
+
+    module.exports = Token;
+    ```
+  </Step>
+
+  <Step title="Configure Fuse networks in Hardhat">
+    Open `hardhat.config.js` and add the `networks` block:
+
+    ```javascript
+    module.exports = {
+      // ...
+      networks: {
+        fuse: {
+          url: "https://rpc.fuse.io/",
+          accounts: [`0xPRIVATE_KEY`], // deployer private key
+        },
+        spark: {
+          url: "https://rpc.fusespark.io/",
+          accounts: [`0xPRIVATE_KEY`], // deployer private key
+        },
+      },
+      // ...
+    };
+    ```
+
+    <Warning>
+      Never commit private keys to source control. Use environment variables or a secrets manager instead. The EOA that owns the key must hold FUSE tokens to cover the deployment gas fee.
+    </Warning>
+  </Step>
+
+  <Step title="Deploy to Fuse">
+    Deploy to Fuse Mainnet:
+
+    ```bash
+    npx hardhat ignition deploy ./ignition/modules/deploy.js --network fuse
+    ```
+
+    Or to Sparknet testnet:
+
+    ```bash
+    npx hardhat ignition deploy ./ignition/modules/deploy.js --network spark
+    ```
+
+    After deployment, paste the contract address into the [Mainnet Explorer](https://explorer.fuse.io) or [Testnet Explorer](https://explorer.fusespark.io) to verify the transaction.
+  </Step>
+</Steps>
+
+## Connect to FuseBox SDK after deployment
+
+[FuseBox](/developers/fusebox) is the recommended way to connect your deployed contract to a frontend. It provides ERC-4337 smart accounts, a Bundler, and a Paymaster for gasless transactions — no direct RPC calls required.
+
+Install the SDK and initialise it with your API key from [console.fuse.io](https://console.fuse.io):
+
+```bash
+npm install @fuseio/fusebox-web-sdk ethers
+```
+
+```javascript
+import { FuseSDK } from "@fuseio/fusebox-web-sdk";
+import { ethers } from "ethers";
+
+const apiKey = "YOUR_FUSEBOX_API_KEY";
+const credentials = new ethers.Wallet(`0xPRIVATE_KEY`);
+
+const fuseSDK = await FuseSDK.init(apiKey, credentials, {
+  withPaymaster: true,
+});
+
+console.log(
+  `Smart account address: https://explorer.fuse.io/address/${fuseSDK.wallet.getSender()}`
+);
+```
+
+<Tip>
+  Setting `withPaymaster: true` sponsors gas fees for your users. Your Operator account's Paymaster is pre-funded with 1 FUSE when you create it on the Console.
+</Tip>
+
+With the SDK initialised, you can call `fuseSDK.transferToken(tokenAddress, recipient, amount)` to move tokens, query balances, and carry out other on-chain operations without writing low-level transaction code. See the [FuseBox SDK overview](/developers/fusebox-sdk) for the full API surface.

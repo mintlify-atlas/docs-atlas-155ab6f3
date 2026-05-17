@@ -1,0 +1,266 @@
+---
+title: "Balances API reference"
+description: "Complete reference for the Fuse Balances API: query ERC20 fungible token balances and NFT holdings for any wallet address on Fuse Network."
+---
+
+The Balances API provides endpoints to query token and NFT balances for any wallet address on Fuse Network. Use the ERC20 endpoint to fetch fungible token holdings including the native FUSE token, and the NFT endpoint to retrieve ERC-721 and ERC-1155 collectibles with metadata. All requests are authenticated with your public API key.
+
+## Base URL
+
+```
+https://api.fuse.io/api/v0/balances
+```
+
+## Authentication
+
+All requests require a public API key passed as a query parameter:
+
+```
+?apiKey=YOUR_PUBLIC_API_KEY
+```
+
+Get your API key from the [Fuse Console](https://console.fuse.io/build).
+
+---
+
+## GET /assets/{address}
+
+Returns all ERC20 fungible token balances for a wallet address, including the native FUSE token.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="address" type="string" required>
+  The wallet address to query for ERC20 token balances.
+</ParamField>
+
+<ParamField query="tokenAddress" type="string">
+  Optional. A specific ERC20 token contract address. If provided, only the balance for that token is returned. If omitted, all token balances are returned.
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="object">
+  Response data wrapper.
+
+  <ResponseField name="data.account" type="object">
+    Account information and token holdings.
+
+    <ResponseField name="data.account.address" type="string">
+      The queried wallet address.
+    </ResponseField>
+
+    <ResponseField name="data.account.tokens" type="array">
+      Array of token balance objects.
+
+      <ResponseField name="data.account.tokens[].tokenAddress" type="string">
+        The ERC20 token contract address. For the native FUSE token, this is `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE`.
+      </ResponseField>
+
+      <ResponseField name="data.account.tokens[].name" type="string">
+        Token name (e.g., `Fuse`).
+      </ResponseField>
+
+      <ResponseField name="data.account.tokens[].symbol" type="string">
+        Token symbol (e.g., `FUSE`).
+      </ResponseField>
+
+      <ResponseField name="data.account.tokens[].decimals" type="integer">
+        Number of decimal places for the token.
+      </ResponseField>
+
+      <ResponseField name="data.account.tokens[].balance" type="string">
+        Token balance in base units (before applying decimals).
+      </ResponseField>
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/balances/assets/0xYourWalletAddress?apiKey=YOUR_API_KEY"
+```
+
+```json
+{
+  "data": {
+    "account": {
+      "address": "0xYourWalletAddress",
+      "tokens": [
+        {
+          "tokenAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+          "name": "Fuse",
+          "symbol": "FUSE",
+          "decimals": 18,
+          "balance": "5000000000000000000"
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+## GET /nft-assets/{address}
+
+Returns all ERC-721 and ERC-1155 NFT assets owned by a wallet address.
+
+### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="address" type="string" required>
+  The wallet address to query for NFT assets.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Maximum number of NFTs to return per request. Minimum: 1, maximum: 100.
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Pagination cursor. Use the `nextCursor` value from the previous response to fetch the next page of results.
+</ParamField>
+
+### Response
+
+<ResponseField name="data" type="object">
+  Response data wrapper.
+
+  <ResponseField name="data.account" type="object">
+    Account information and NFT holdings.
+
+    <ResponseField name="data.account.address" type="string">
+      The queried wallet address.
+    </ResponseField>
+
+    <ResponseField name="data.account.collectibles" type="array">
+      Array of NFT collectible objects.
+
+      <ResponseField name="data.account.collectibles[].id" type="string">
+        Unique identifier for the NFT.
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].tokenId" type="string">
+        The NFT token ID within its collection.
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].name" type="string">
+        Display name of the NFT.
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].description" type="string">
+        Description of the NFT.
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].imageURL" type="string">
+        URL of the NFT's image or media.
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].descriptorUri" type="string">
+        Metadata URI (e.g., IPFS or HTTP URL) for the NFT.
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].created" type="string">
+        Timestamp when the NFT was minted.
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].collection" type="object">
+        Information about the NFT's parent collection.
+
+        <ResponseField name="data.account.collectibles[].collection.collectionAddress" type="string">
+          Contract address of the collection.
+        </ResponseField>
+
+        <ResponseField name="data.account.collectibles[].collection.collectionName" type="string">
+          Name of the collection.
+        </ResponseField>
+
+        <ResponseField name="data.account.collectibles[].collection.collectionSymbol" type="string">
+          Symbol of the collection.
+        </ResponseField>
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].owner" type="object">
+        Current owner of the NFT.
+
+        <ResponseField name="data.account.collectibles[].owner.id" type="string">
+          Owner's wallet address.
+        </ResponseField>
+      </ResponseField>
+
+      <ResponseField name="data.account.collectibles[].creator" type="object">
+        Original creator of the NFT.
+
+        <ResponseField name="data.account.collectibles[].creator.id" type="string">
+          Creator's wallet address.
+        </ResponseField>
+      </ResponseField>
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="nextCursor" type="string">
+  Cursor for fetching the next page. `null` when there are no more results.
+</ResponseField>
+
+### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/balances/nft-assets/0xYourWalletAddress?apiKey=YOUR_API_KEY&limit=10"
+```
+
+```json
+{
+  "data": {
+    "account": {
+      "address": "0xYourWalletAddress",
+      "collectibles": [
+        {
+          "id": "nft_001",
+          "tokenId": "341",
+          "name": "FusePunk #341",
+          "description": "A unique FusePunk NFT.",
+          "imageURL": "https://ipfs.io/ipfs/Qm.../341.png",
+          "descriptorUri": "ipfs://Qm.../341",
+          "created": "2023-01-15T10:00:00Z",
+          "collection": {
+            "collectionAddress": "0xb73CC6D7a621E0e220b369C319DBFaC258cEf4D2",
+            "collectionName": "FusePunks",
+            "collectionSymbol": "PUNK"
+          },
+          "owner": { "id": "0xYourWalletAddress" },
+          "creator": { "id": "0xCreatorAddress" }
+        }
+      ]
+    }
+  },
+  "nextCursor": null
+}
+```
+
+---
+
+## Error responses
+
+<ResponseField name="statusCode" type="integer">
+  HTTP status code of the error.
+</ResponseField>
+
+<ResponseField name="errorMessage" type="string">
+  Human-readable error description.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Short error code.
+</ResponseField>
+
+| Status | Meaning |
+|---|---|
+| 403 | Forbidden — invalid or missing API key |

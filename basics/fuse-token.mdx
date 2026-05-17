@@ -1,0 +1,111 @@
+---
+title: "FUSE Token: the native currency of Fuse Network"
+description: "Learn what the FUSE token is, how it is used for gas, staking, and governance, its tokenomics, and where to acquire it on exchanges or via a bridge."
+---
+
+FUSE is the native token of Fuse Network. It plays the same role that ETH plays on Ethereum: it is required to pay gas fees for every transaction, and it is the unit of value that secures the network through staking. New FUSE tokens are issued with each block added to the chain.
+
+## Token utility
+
+<CardGroup cols={2}>
+  <Card title="Gas fees" icon="gas-pump">
+    Every transaction on Fuse Network must pay a gas fee denominated in FUSE. The current network gas price is 10 Gwei, making typical transactions cost around $0.0001.
+  </Card>
+  <Card title="Payments" icon="arrow-right-arrow-left">
+    Sending FUSE is a native transfer, not a smart contract call. Native transfers require less gas than ERC-20 token transfers.
+  </Card>
+  <Card title="Staking" icon="shield-check">
+    FUSE holders can delegate their tokens to validators and earn a share of block rewards proportionate to their stake, minus a minimum 15% validator fee.
+  </Card>
+  <Card title="Validation" icon="server">
+    To become a validator and help secure the network, you must stake a minimum of 100,000 FUSE. The network currently has 60+ active validators.
+  </Card>
+  <Card title="Governance" icon="vote-yea">
+    Validators vote on protocol changes using their staked FUSE plus any tokens delegated to them. More stake equals greater voting weight on network upgrades.
+  </Card>
+  <Card title="Ecosystem" icon="grid">
+    FUSE is used across DeFi protocols and consumer apps built on Fuse, including Voltage Finance, Solid, and Freedom.
+  </Card>
+</CardGroup>
+
+## Tokenomics
+
+Fuse is transitioning from an inflationary emission model to a revenue-based, deflationary economy. The key changes are:
+
+- **No new token:** the FUSE token continues as the native asset. No migration or bridging is required.
+- **Max supply cap:** the total supply of FUSE will never exceed 400,000,000 tokens, approved through community governance ([FRC-002](https://forum.fuse.io/t/frc02-setting-a-max-supply-introducing-fee-burn-and-transitioning-to-a-deflationary-model/633/23)).
+- **Fee burning (FIP-1559):** a portion of every transaction's base fee is burned, permanently removing tokens from circulation.
+- **Gradual inflation reduction:** the network's emission rate decreases in stages. Fuse is projected to reach near-zero or deflationary inflation (below 1%) around 2027, depending on network activity.
+- **stFUSE:** a liquid staking mechanism that lets holders earn a share of network fees, sequencer revenue, and protocol service income.
+
+<Info>
+  All existing balances, contracts, and token supply remain intact during the tokenomics transition. Nothing changes for current FUSE holders.
+</Info>
+
+## New staking rewards model
+
+Under the updated model, staking rewards come from real network activity rather than token emissions:
+
+| Revenue source | Description |
+|---|---|
+| Sequencer fees | Share of transaction inclusion fees paid by network users |
+| Protocol service revenue | Income from FuseBox, Charge, and other middleware services |
+| Ecosystem flows | Fees and yield from consumer apps such as Solid and Freedom |
+| Foundation incentives | Temporary rewards from the Fuse Foundation while on-chain revenue ramps up |
+
+## FUSE on other blockchains
+
+Wrapped versions of FUSE exist on several chains as ERC-20 tokens. You can add them to your wallet using the contract addresses below:
+
+| Network | Contract |
+|---|---|
+| Ethereum | [0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d](https://etherscan.io/token/0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d) |
+| Polygon | [0xf915fdda4c882731c0456a4214548cd13a822886](https://polygonscan.com/address/0xf915fdda4c882731c0456a4214548cd13a822886) |
+| BNB Chain | [0x5857c96dae9cf8511b08cb07f85753c472d36ea3](https://bscscan.com/address/0x5857c96dae9cf8511b08cb07f85753c472d36ea3) |
+| Arbitrum One | [0xbdef0e9ef12e689f366fe494a7a7d0dad25d9286](https://arbiscan.io/token/0xbdef0e9ef12e689f366fe494a7a7d0dad25d9286) |
+| Optimism | [0xe453d6649643f1f460c371dc3d1da98f7922fe51](https://optimistic.etherscan.io/token/0xe453d6649643f1f460c371dc3d1da98f7922fe51) |
+| Base | [0x01facC69EC7360640AA5898E852326752801674A](https://basescan.org/token/0x01facC69EC7360640AA5898E852326752801674A) |
+
+## How to acquire FUSE
+
+### Centralized exchanges (CEX)
+
+Buy FUSE with fiat or other cryptocurrencies on these platforms:
+
+| Exchange | Link |
+|---|---|
+| Gate.io | [gate.io](https://www.gate.io/en/price/fuse-fuse) |
+| HTX (Huobi Global) | [htx.com](https://www.htx.com/en-us/asset-introduction/details/?currency=fuse) |
+| MEXC Global | [mexc.com](https://www.mexc.com/price/FUSE) |
+| AscendEX | [ascendex.com](https://ascendex.com/en/cashtrade-spottrading/usdt/fuse) |
+
+### Decentralized exchanges (DEX)
+
+Swap for FUSE on-chain using any of these DEXes:
+
+| DEX | Link |
+|---|---|
+| Voltage Finance | [voltage.finance](https://voltage.finance/swap) |
+| Uniswap | [app.uniswap.org](https://app.uniswap.org/) |
+| PancakeSwap | [pancakeswap.finance](https://pancakeswap.finance/swap) |
+| Sushi | [sushi.com](https://www.sushi.com/swap) |
+| Rango Exchange | [rango.exchange](https://rango.exchange/) |
+| IcecreamSwap | [icecreamswap.com](https://icecreamswap.com) |
+
+### Fiat on-ramps
+
+Purchase FUSE directly with a credit card or bank transfer:
+
+| Service | Link |
+|---|---|
+| PayBis | [paybis.com](https://paybis.com/) |
+| Transak | [transak.com](https://transak.com/) |
+| TransFi | [transfi.com](https://www.transfi.com/) |
+
+### Bridge
+
+If you already hold FUSE on another chain (Ethereum, Polygon, Arbitrum, etc.), you can bridge it to Fuse Network. See the [bridge guide](/basics/bridge-to-fuse).
+
+<Tip>
+  Current FUSE trading volumes and prices across all exchanges are available on the [CoinMarketCap FUSE page](https://coinmarketcap.com/currencies/fuse-network/).
+</Tip>

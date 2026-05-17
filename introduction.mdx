@@ -1,0 +1,77 @@
+---
+title: "Fuse: Ethereum-compatible blockchain for payments"
+description: "Fuse is an EVM-compatible blockchain built for businesses and developers. Sub-5s finality, near-zero fees, account abstraction, and a full developer SDK."
+---
+
+Fuse is an Ethereum-compatible blockchain platform designed to make Web3 payments accessible to every business and developer. With block times under 5 seconds, transaction costs around $0.0001, and built-in account abstraction via ERC-4337, Fuse lets you build consumer-grade payment applications without the UX friction typical of blockchain development.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/developers/quick-start">
+    Deploy your first smart contract and connect it to FuseBox in minutes
+  </Card>
+  <Card title="FuseBox SDK" icon="cube" href="/developers/fusebox-sdk">
+    TypeScript and Flutter SDKs for smart wallets, gasless transactions, and more
+  </Card>
+  <Card title="API Reference" icon="code" href="/developers/apis/overview">
+    REST APIs for balances, trading, notifications, staking, and blockchain exploration
+  </Card>
+  <Card title="Fuse AI" icon="brain" href="/developers/fuse-ai">
+    Agentic payments infrastructure for AI agents and automated systems
+  </Card>
+</CardGroup>
+
+## What you can build on Fuse
+
+Fuse provides the full stack for payment and Web3 applications — from low-level blockchain infrastructure to high-level SDKs and APIs that abstract away complexity.
+
+<CardGroup cols={3}>
+  <Card title="Gasless Apps" icon="gas-pump" href="/developers/fusebox">
+    Sponsor gas fees for your users via the ERC-4337 Paymaster, creating seamless Web2-like experiences
+  </Card>
+  <Card title="Smart Wallets" icon="wallet" href="/developers/apis/smart-wallet-api">
+    Programmatically create and manage ERC-4337 smart contract wallets for your users
+  </Card>
+  <Card title="DeFi & Trading" icon="chart-line" href="/developers/apis/trade-api">
+    Access DEX liquidity, token prices, and swap functionality through the Trade API
+  </Card>
+  <Card title="Token Management" icon="coins" href="/developers/apis/balances-api">
+    Query token balances, transaction history, and portfolio data across any address
+  </Card>
+  <Card title="AI Agent Payments" icon="robot" href="/developers/fuse-ai">
+    Enable machine-to-machine micropayments via x402, MPP, and ERC-8183 standards
+  </Card>
+  <Card title="Staking & Validation" icon="shield-check" href="/network/validators">
+    Participate in network security as a validator or delegate FUSE to earn rewards
+  </Card>
+</CardGroup>
+
+## Get started in 3 steps
+
+<Steps>
+  <Step title="Connect to Fuse Network">
+    Add Fuse Mainnet (Chain ID: 122) to your wallet or development environment. The RPC endpoint is `https://rpc.fuse.io/`. See [network connection guide](/basics/connect-to-fuse).
+  </Step>
+  <Step title="Get a FuseBox API Key">
+    Create an Operator account at [console.fuse.io](https://console.fuse.io), fund it with at least 10 FUSE, and obtain your API key to access FuseBox SDKs and APIs. See the [FuseBox guide](/developers/fusebox).
+  </Step>
+  <Step title="Build with the SDK">
+    Install `@fuseio/fusebox-web-sdk` and initialize the FuseSDK with your API key to start creating smart wallets and sending gasless transactions. See the [SDK reference](/developers/fusebox-sdk).
+  </Step>
+</Steps>
+
+## Network at a glance
+
+| Parameter | Value |
+|---|---|
+| Chain ID (Mainnet) | 122 |
+| Chain ID (Testnet) | 123 |
+| RPC (Mainnet) | `https://rpc.fuse.io/` |
+| Block time | ~5 seconds |
+| Gas price | 10 GWei |
+| Transaction cost | ~$0.0001 |
+| Consensus | Delegated Proof of Stake (DPoS) |
+| EVM Compatible | Yes |
+
+<Note>
+  Fuse is fully EVM-compatible — any Solidity smart contract and Ethereum tooling (Hardhat, Remix, Foundry, ethers.js, viem) works on Fuse without modification.
+</Note>

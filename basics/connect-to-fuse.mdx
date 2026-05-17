@@ -1,0 +1,87 @@
+---
+title: "Connect to Fuse Network"
+description: "Add Fuse Mainnet and Spark Testnet to MetaMask or any EVM wallet, and get test FUSE from a faucet to start building and transacting."
+---
+
+To use Fuse Network, you need a Web3 wallet configured with the correct network details. Any EVM-compatible wallet works — MetaMask is the most common starting point. Once connected, you can interact with dApps, send transactions, and deploy smart contracts on Fuse.
+
+## Network details
+
+### Mainnet
+
+| Parameter | Value |
+|---|---|
+| Network name | Fuse Network |
+| Chain ID | 122 |
+| RPC URL | `https://rpc.fuse.io/` |
+| Symbol | FUSE |
+| Block explorer | `https://explorer.fuse.io/` |
+| Gas price | 10 Gwei |
+
+### Testnet (Spark)
+
+| Parameter | Value |
+|---|---|
+| Network name | Fuse Spark |
+| Chain ID | 123 |
+| RPC URL | `https://rpc.fusespark.io/` |
+| Symbol | FUSE |
+| Block explorer | `https://explorer.fusespark.io/` |
+
+<Note>
+  Use Spark Testnet for development and testing. Test FUSE has no real value and can be obtained for free from a faucet.
+</Note>
+
+## Add Fuse to MetaMask
+
+MetaMask is a browser-extension wallet that supports any EVM-compatible network. The steps below walk you through adding Fuse Mainnet manually.
+
+<Steps>
+  <Step title="Open MetaMask and go to network settings">
+    Click the network selector at the top of the MetaMask extension (it shows the currently active network, such as "Ethereum Mainnet"). Select **Add network** at the bottom of the list, then choose **Add a network manually**.
+  </Step>
+  <Step title="Enter the Fuse Mainnet details">
+    Fill in the fields using the values from the mainnet table above:
+
+    - **Network name:** Fuse Network
+    - **New RPC URL:** `https://rpc.fuse.io/`
+    - **Chain ID:** 122
+    - **Currency symbol:** FUSE
+    - **Block explorer URL:** `https://explorer.fuse.io/`
+  </Step>
+  <Step title="Save and switch">
+    Click **Save**. MetaMask will automatically switch to Fuse Network. The network selector at the top of the extension will now show "Fuse Network".
+  </Step>
+  <Step title="Verify the connection">
+    Your FUSE balance will appear in the main account view once you are on Fuse Network. If you are new to the network, the balance will show 0 FUSE until you bridge or transfer funds.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also add Fuse Network in one click via [Chainlist](https://chainlist.org/) — search for "Fuse" and click **Add to MetaMask**.
+</Tip>
+
+## Add other wallets
+
+The process is the same for any EVM wallet that supports custom networks (such as Trust Wallet, Rabby, or Coinbase Wallet). Enter the network name, RPC URL, Chain ID, symbol, and explorer URL from the table above. Some wallets require fewer fields.
+
+## Add the Spark Testnet
+
+To add the Spark Testnet, repeat the MetaMask steps above using the testnet values: RPC `https://rpc.fusespark.io/`, Chain ID `123`.
+
+## Get test FUSE from a faucet
+
+Test FUSE is required to pay gas fees on Spark Testnet. Use one of the public faucets below:
+
+<CardGroup cols={2}>
+  <Card title="ChainDrop" icon="faucet" href="https://chaindrop.org/?chainid=123&token=0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee">
+    Request test FUSE directly from the ChainDrop faucet by connecting your wallet.
+  </Card>
+  <Card title="Stakely" icon="faucet" href="https://stakely.io/en/faucet/fuse-fuse">
+    Request test FUSE from the Stakely faucet. Requires a small on-chain balance on another network to prevent abuse.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Faucets impose rate limits. If a request fails, wait a few minutes before trying again or try the other faucet.
+</Warning>

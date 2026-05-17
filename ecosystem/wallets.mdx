@@ -1,0 +1,83 @@
+---
+title: "Wallets supported on Fuse Network"
+description: "Overview of browser extension, mobile, and smart contract wallets compatible with Fuse Network, including setup instructions and FuseBox smart wallets."
+---
+
+A crypto wallet stores your private keys and lets you send, receive, and manage tokens, as well as interact with decentralized applications. Your assets live on the blockchain itself—the wallet is the key that proves ownership and authorizes transactions. If you lose your private keys, you lose access to your funds.
+
+Fuse Network is EVM-compatible, which means any wallet that supports custom EVM networks can connect to Fuse. The wallets below have been confirmed to work with Fuse.
+
+## Supported wallets
+
+The following wallets are available on Fuse Network. For descriptions and links, visit the [Fuse ecosystem wallets page](https://www.fuse.io/ecosystem?filters=wallet).
+
+| Wallet | Wallet |
+|---|---|
+| AlphaWallet | Avocado |
+| Bitazza | BitKeep |
+| DePocket | Essentials |
+| Frontier | Krystal DeFi |
+| Life Crypto | MetaMask |
+| Nabox | Obvious |
+| Quidl | Rabby |
+| SafePal | Tria |
+| Tweed | Volt |
+
+## MetaMask setup
+
+MetaMask is the most widely used browser extension wallet and works with Fuse Network out of the box by adding a custom RPC network.
+
+To connect MetaMask to Fuse:
+
+1. Open MetaMask and click the network selector dropdown at the top.
+2. Click **Add network** → **Add a network manually**.
+3. Fill in the following details:
+
+| Field | Value |
+|---|---|
+| Network name | Fuse Network |
+| New RPC URL | `https://rpc.fuse.io` |
+| Chain ID | `122` |
+| Currency symbol | FUSE |
+| Block explorer URL | `https://explorer.fuse.io` |
+
+4. Click **Save** and switch to the Fuse Network.
+
+For the Fuse Spark testnet, use RPC URL `https://rpc.fusespark.io` and Chain ID `123`.
+
+<Note>
+  Always verify you are on the correct network before sending transactions. The Chain ID for Fuse mainnet is 122 and for Fuse Spark testnet is 123.
+</Note>
+
+## Mobile wallets
+
+**Volt App** — The [Volt App](https://voltage.finance/mobile) by Voltage Finance is a mobile-first wallet and social network designed for the Fuse ecosystem. It supports portfolio management, multiple linked wallets, and token transfers powered by Fuse.
+
+**SafePal** — A hardware-backed mobile wallet with Fuse Network support for secure cold storage on mobile.
+
+**Rabby** — A multi-chain browser wallet with risk scanning and chain-switching. Supports Fuse as a custom network.
+
+**AlphaWallet** — An open-source iOS and Android wallet with strong NFT support and EVM compatibility.
+
+## Smart contract wallets via FuseBox
+
+FuseBox provides a Wallets-as-a-Service API that creates non-custodial smart contract wallets for your users. These wallets are based on [ERC-4337](https://eips.ethereum.org/EIPS/eip-4337) account abstraction and offer:
+
+- **Gasless transactions** — paymasters cover gas fees on behalf of users
+- **Non-custodial ownership** — the wallet owner retains full control via their signing key
+- **Upgradable contracts** — wallets can be upgraded without changing the user-facing address
+- **WalletConnect compatibility** — FuseBox smart wallets support the WalletConnect protocol
+
+To create a smart wallet for a user, authenticate them with the [Smart Wallet API](/api-reference/smart-wallet/overview) and call the wallet creation endpoint. The wallet is deployed on-chain when the user's first transaction is submitted.
+
+```bash
+curl -X POST "https://api.fuse.io/api/v2/smart-wallets/auth?apiKey=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hash": "0xSIGNED_HASH",
+    "signature": "0xSIGNATURE",
+    "ownerAddress": "0xOWNER_ADDRESS"
+  }'
+```
+
+See the [Smart Wallet API reference](/api-reference/smart-wallet/overview) for full authentication and wallet management documentation.

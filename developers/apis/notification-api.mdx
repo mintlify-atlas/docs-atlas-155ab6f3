@@ -1,0 +1,300 @@
+---
+title: "Notification API: real-time wallet events via webhooks"
+description: "Subscribe to real-time Fuse blockchain events via webhooks. Monitor native FUSE, ERC-20, ERC-721, and ERC-1155 transfers for any wallet address."
+---
+
+The Notification API solves a fundamental challenge in web3 development: the blockchain does not natively push events to your application. Without notifications, users must manually check for activity. The Fuse Notification API lets you register webhook URLs and subscribe wallet or token addresses to receive real-time HTTP callbacks whenever relevant on-chain activity occurs. Setup takes a single API call and no additional infrastructure.
+
+## Base URL
+
+```
+https://api.fuse.io/api/v0/notifications
+```
+
+## Authentication
+
+Notification API endpoints require both your public and secret API keys:
+
+<ParamField header="API-SECRET" type="string" required>
+  Your secret API key, sent as a request header.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key, sent as a query parameter.
+</ParamField>
+
+Get both keys from the [Fuse Console](https://console.fuse.io/build).
+
+## Event types
+
+When creating a webhook, set the `eventType` field to control which transfers trigger it:
+
+| Event type | Description |
+|---|---|
+| `ALL` | All transfer types |
+| `FUSE` | Native FUSE transfers only |
+| `ERC20` | ERC-20 token transfers only |
+| `ERC721` | ERC-721 and ERC-1155 NFT transfers |
+
+## Webhook security
+
+To verify that incoming webhook notifications originate from Fuse, allow-list the following IP addresses on your server:
+
+```
+35.191.17.80
+35.191.17.87
+35.191.17.84
+35.191.24.103
+```
+
+## Retry logic
+
+If your webhook endpoint returns a non-200 status code or is unreachable, Fuse retries the delivery up to 6 times with increasing delays:
+
+- 15 seconds
+- 1 minute
+- 10 minutes
+- 1 hour
+- 1 day
+- 1 day
+
+## Endpoints
+
+### POST /webhook — Create a webhook
+
+Create a new webhook associated with a project. The webhook URL will receive POST requests when matching events occur.
+
+**Endpoint:** `POST https://api.fuse.io/api/v0/notifications/webhook`
+
+#### Request body
+
+<ParamField body="projectId" type="string" required>
+  Your project ID. Find it in the URL of your project page in the Fuse Console.
+</ParamField>
+
+<ParamField body="webhookUrl" type="string" required>
+  The URL that will receive webhook event payloads.
+</ParamField>
+
+<ParamField body="eventType" type="string" required>
+  The transfer type to listen for: `ALL`, `FUSE`, `ERC20`, or `ERC721`.
+</ParamField>
+
+#### Example
+
+```bash
+curl -X POST "https://api.fuse.io/api/v0/notifications/webhook?apiKey=YOUR_API_KEY" \
+  -H "API-SECRET: YOUR_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectId": "62ce87c8131bbffe0f83af65",
+    "webhookUrl": "https://yourapp.example.com/fuse-webhook",
+    "eventType": "ALL"
+  }'
+```
+
+```json
+{
+  "projectId": "62ce87c8131bbffe0f83af65",
+  "webhookUrl": "https://yourapp.example.com/fuse-webhook",
+  "eventType": "ALL"
+}
+```
+
+---
+
+### POST /webhook/add-addresses — Add addresses to a webhook
+
+Subscribe one or more wallet or token addresses to an existing webhook so that activity at those addresses triggers notifications.
+
+**Endpoint:** `POST https://api.fuse.io/api/v0/notifications/webhook/add-addresses`
+
+#### Request body
+
+<ParamField body="webhookId" type="string" required>
+  The ID of the webhook to add addresses to.
+</ParamField>
+
+<ParamField body="addresses" type="string[]" required>
+  Array of wallet or token contract addresses to monitor.
+</ParamField>
+
+#### Example
+
+```bash
+curl -X POST "https://api.fuse.io/api/v0/notifications/webhook/add-addresses?apiKey=YOUR_API_KEY" \
+  -H "API-SECRET: YOUR_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "webhookId": "wh_abc123",
+    "addresses": [
+      "0x1ea1f375B5dA185eb51edcbED23F3d401f8368cE",
+      "0xcc95E80DA76bd41507b99d9b977Dc3062bcf6430"
+    ]
+  }'
+```
+
+---
+
+### GET /webhooks/{projectId} — List webhooks for a project
+
+Retrieve all webhooks associated with a project.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/notifications/webhooks/{projectId}`
+
+#### Request parameters
+
+<ParamField path="projectId" type="string" required>
+  Your project ID.
+</ParamField>
+
+---
+
+### GET /webhook/{webhookId} — Get a webhook by ID
+
+Retrieve details of a specific webhook.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/notifications/webhook/{webhookId}`
+
+#### Request parameters
+
+<ParamField path="webhookId" type="string" required>
+  The unique webhook ID.
+</ParamField>
+
+---
+
+### PUT /webhook — Update a webhook
+
+Update a webhook's URL or event type.
+
+**Endpoint:** `PUT https://api.fuse.io/api/v0/notifications/webhook`
+
+#### Request body
+
+<ParamField body="webhookId" type="string" required>
+  The ID of the webhook to update.
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  The new URL to send notifications to.
+</ParamField>
+
+<ParamField body="eventType" type="string">
+  The new event type filter: `ALL`, `FUSE`, `ERC20`, or `ERC721`.
+</ParamField>
+
+---
+
+### DELETE /webhook/{webhookId} — Delete a webhook
+
+Permanently remove a webhook and stop all associated notifications.
+
+**Endpoint:** `DELETE https://api.fuse.io/api/v0/notifications/webhook/{webhookId}`
+
+#### Request parameters
+
+<ParamField path="webhookId" type="string" required>
+  The unique webhook ID to delete.
+</ParamField>
+
+---
+
+### POST /webhook/delete-addresses — Remove addresses from a webhook
+
+Unsubscribe specific addresses from a webhook so they no longer trigger notifications.
+
+**Endpoint:** `POST https://api.fuse.io/api/v0/notifications/webhook/delete-addresses`
+
+#### Request body
+
+<ParamField body="webhookId" type="string" required>
+  The ID of the webhook to remove addresses from.
+</ParamField>
+
+<ParamField body="addresses" type="string[]" required>
+  Array of addresses to unsubscribe.
+</ParamField>
+
+---
+
+### GET /webhook/addresses/{webhookId} — Get addresses for a webhook
+
+Retrieve all addresses currently subscribed to a specific webhook.
+
+**Endpoint:** `GET https://api.fuse.io/api/v0/notifications/webhook/addresses/{webhookId}`
+
+#### Request parameters
+
+<ParamField path="webhookId" type="string" required>
+  The unique webhook ID.
+</ParamField>
+
+## Webhook event payload
+
+When a monitored event occurs, Fuse sends a POST request to your webhook URL with a JSON body. The payload structure varies by event type.
+
+### Native FUSE transfer
+
+```json
+{
+  "to": "0x1ea1f375B5dA185eb51edcbED23F3d401f8368cE",
+  "from": "0xcc95E80DA76bd41507b99d9b977Dc3062bcf6430",
+  "value": "1000000000000000000",
+  "valueEth": "1.0",
+  "txHash": "0xf801c95b9325e69be8ccf8889f1b3245a5b48e6f783913bd4d41ec4c6ba9720b",
+  "blockNumber": 18196049,
+  "tokenType": "FUSE",
+  "tokenAddress": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+  "projectId": "62ce87c8131bbffe0f83af65",
+  "direction": "outgoing",
+  "gasPrice": "11000000000",
+  "gasUsed": "119104",
+  "gasFee": "1310144000000000"
+}
+```
+
+### ERC-20 token transfer
+
+```json
+{
+  "to": "0x1ea1f375B5dA185eb51edcbED23F3d401f8368cE",
+  "from": "0x331C1B0cDCE2e9223c707cf07c6515C75Ad95B6b",
+  "txHash": "0x9d5156039280cfd5fd828293d0351fda88e6f5078db095c63db164c8af7c4f50",
+  "tokenAddress": "0x5Df217D84e67a4aAc9d130fc7AfED5a94e873f0D",
+  "tokenType": "ERC-20",
+  "tokenName": "GoodDollar",
+  "tokenSymbol": "G$",
+  "tokenDecimals": "2",
+  "value": "109700",
+  "projectId": "62caedf9e2719e72815d0703",
+  "direction": "incoming"
+}
+```
+
+### ERC-721 NFT transfer
+
+```json
+{
+  "to": "0x1ea1f375B5dA185eb51edcbED23F3d401f8368cE",
+  "from": "0xcc95E80DA76bd41507b99d9b977Dc3062bcf6430",
+  "txHash": "0x017d84e90bf8106e16f77e1e8991e9c054ce9071396af2faa53df4d5b0cd959c",
+  "tokenAddress": "0xb73CC6D7a621E0e220b369C319DBFaC258cEf4D2",
+  "tokenType": "ERC-721",
+  "tokenSymbol": "PUNK",
+  "tokenName": "FusePunks",
+  "tokenId": 341,
+  "projectId": "62ce87c8131bbffe0f83af65",
+  "direction": "outgoing"
+}
+```
+
+<Note>
+The `addressType` field in each event payload will be `"Wallet"` if you subscribed to a wallet address, or `"Token"` if you subscribed to a token contract address. If both match, you may receive two events for the same transaction — differentiate them using this field.
+</Note>
+
+## Error responses
+
+| Status | Description |
+|---|---|
+| `403` | Forbidden — invalid or missing API key or secret |

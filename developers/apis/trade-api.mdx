@@ -1,0 +1,268 @@
+---
+title: "Trade API: DEX token swaps and live token price feeds"
+description: "Fetch live and historical token prices, get indicative prices and swap quotes, and access liquidity sources on the Fuse DEX powered by Voltage Finance."
+---
+
+The Trade API gives you programmatic access to decentralized exchange (DEX) functionality on the Fuse network, powered by [Voltage Finance](https://voltage.finance/). It is split into two versions: V1 provides price feeds and historical statistics, while V2 adds real-time indicative prices, swap quotes with slippage controls, and liquidity source discovery. Both versions are available under the same base URL and use a shared API key.
+
+## Base URL
+
+```
+https://api.fuse.io
+```
+
+Endpoint paths are versioned independently:
+- V1 endpoints: `/api/v0/trade/...`
+- V2 endpoints: `/api/v1/trade/...`
+
+## Authentication
+
+Pass your public API key as a query parameter on every request:
+
+```
+?apiKey=YOUR_PUBLIC_API_KEY
+```
+
+## V1 endpoints — price feeds and statistics
+
+### GET /api/v0/trade/price/{tokenAddress}
+
+Returns the latest USD price for a token.
+
+#### Request parameters
+
+<ParamField path="tokenAddress" type="string" required>
+  The ERC-20 token contract address to price.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/trade/price/0x620fd5fa44BE6af63715Ef4E65DDFA0387aD13F5?apiKey=YOUR_API_KEY"
+```
+
+```json
+{
+  "data": "1.0002"
+}
+```
+
+---
+
+### GET /api/v0/trade/pricechange/{tokenAddress}
+
+Returns the price change percentage for a token over the last 24 hours.
+
+#### Request parameters
+
+<ParamField path="tokenAddress" type="string" required>
+  The token contract address.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+### POST /api/v0/trade/pricechange/{tokenAddress}
+
+Returns the price change for a token over a custom time duration specified in the request body.
+
+#### Request parameters
+
+<ParamField path="tokenAddress" type="string" required>
+  The token contract address.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Request body
+
+<ParamField body="duration" type="object" required>
+  A duration object specifying the time window. For example: `{ "days": 7 }`.
+</ParamField>
+
+---
+
+### GET /api/v0/trade/pricechange/interval/{timeFrame}/{tokenAddress}
+
+Returns price change data for a token over a standard interval.
+
+#### Request parameters
+
+<ParamField path="timeFrame" type="string" required>
+  Interval for price change. One of: `ALL`, `MONTH`, `WEEK`, `DAY`, `HOUR`.
+</ParamField>
+
+<ParamField path="tokenAddress" type="string" required>
+  The token contract address.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+---
+
+### GET /api/v0/trade/stats/{tokenAddress}
+
+Returns historical OHLCV statistics for a token.
+
+#### Request parameters
+
+<ParamField path="tokenAddress" type="string" required>
+  The token contract address.
+</ParamField>
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Number of historical data points to return.
+</ParamField>
+
+## V2 endpoints — swap quotes and liquidity
+
+### GET /api/v1/trade/price
+
+Returns an indicative (non-binding) price for a potential swap. Use this to show users an estimated price before committing to a transaction.
+
+#### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="sellToken" type="string" required>
+  The contract address of the token to sell.
+</ParamField>
+
+<ParamField query="buyToken" type="string" required>
+  The contract address of the token to buy.
+</ParamField>
+
+<ParamField query="sellAmount" type="string">
+  Amount to sell in the token's base unit (wei). Provide either `sellAmount` or `buyAmount`, not both.
+</ParamField>
+
+<ParamField query="buyAmount" type="string">
+  Amount to buy in the token's base unit (wei). Provide either `buyAmount` or `sellAmount`, not both.
+</ParamField>
+
+<ParamField query="slippagePercentage" type="string">
+  Maximum acceptable slippage as a decimal fraction (e.g., `"0.01"` for 1%).
+</ParamField>
+
+<ParamField query="takerAddress" type="string">
+  The address that will execute the trade. Used for validation.
+</ParamField>
+
+<ParamField query="excludedSources" type="string">
+  Comma-separated list of liquidity source names to exclude.
+</ParamField>
+
+<ParamField query="gasPrice" type="string">
+  Gas price in wei. Defaults to a safe estimate if omitted.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v1/trade/price?apiKey=YOUR_API_KEY&sellToken=0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE&buyToken=0x620fd5fa44BE6af63715Ef4E65DDFA0387aD13F5&sellAmount=1000000000000000000"
+```
+
+---
+
+### GET /api/v1/trade/quote
+
+Returns a firm quote for buying or selling any ERC-20 token. The response includes calldata that can be submitted directly to the network to execute the swap.
+
+#### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="sellToken" type="string" required>
+  The contract address of the token to sell.
+</ParamField>
+
+<ParamField query="buyToken" type="string" required>
+  The contract address of the token to buy.
+</ParamField>
+
+<ParamField query="sellAmount" type="string">
+  Amount to sell in base units. Provide either `sellAmount` or `buyAmount`.
+</ParamField>
+
+<ParamField query="buyAmount" type="string">
+  Amount to buy in base units. Provide either `buyAmount` or `sellAmount`.
+</ParamField>
+
+<ParamField query="slippagePercentage" type="string">
+  Maximum slippage tolerance as a decimal (e.g., `"0.005"` for 0.5%).
+</ParamField>
+
+<ParamField query="takerAddress" type="string">
+  The address executing the trade. Required for on-chain validation.
+</ParamField>
+
+<ParamField query="feeRecipient" type="string">
+  Address to receive protocol fees, if applicable.
+</ParamField>
+
+<ParamField query="buyTokenPercentageFee" type="string">
+  Percentage of the buy token amount to send to `feeRecipient` as a decimal (e.g., `"0.01"` for 1%).
+</ParamField>
+
+<ParamField query="shouldSellEntireBalance" type="boolean">
+  When `true`, the quote uses the taker's entire balance of the sell token.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v1/trade/quote?apiKey=YOUR_API_KEY&sellToken=0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE&buyToken=0x620fd5fa44BE6af63715Ef4E65DDFA0387aD13F5&sellAmount=1000000000000000000&takerAddress=0x1234567890abcdef1234567890abcdef12345678"
+```
+
+---
+
+### GET /api/v1/trade/sources
+
+Lists all liquidity sources (AMMs and routing pools) currently enabled on the Fuse DEX.
+
+#### Request parameters
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v1/trade/sources?apiKey=YOUR_API_KEY"
+```
+
+```json
+{
+  "sources": [
+    { "name": "Voltage_Finance", "proportion": "1" }
+  ]
+}
+```
+
+## Error responses
+
+| Status | Description |
+|---|---|
+| `400` | Bad request — check required parameters like `sellToken`, `buyToken`, and amount fields |
+| `401` | Unauthorized — invalid API key |
+| `403` | Forbidden — missing API key |

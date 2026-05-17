@@ -1,0 +1,283 @@
+---
+title: "Trade API reference: prices and swaps"
+description: "Complete reference for the Fuse Trade API: fetch token prices, price changes, historical stats, and execute ERC20 swaps via the Voltage Finance DEX."
+---
+
+The Trade API provides endpoints for integrating token price data and swap functionality into your application. It is powered by [Voltage Finance](https://voltage.finance/), the primary DEX on Fuse Network. The API is split into two versions: V1 provides historical price and price-change data, while V2 provides real-time indicative prices, firm swap quotes, and liquidity source discovery for executing token swaps.
+
+## Base URL
+
+```
+https://api.fuse.io
+```
+
+## Authentication
+
+All requests require a public API key passed as a query parameter:
+
+```
+?apiKey=YOUR_PUBLIC_API_KEY
+```
+
+Get your API key from the [Fuse Console](https://console.fuse.io/build).
+
+---
+
+## V1 Endpoints
+
+### GET /api/v0/trade/price/{tokenAddress}
+
+Returns the latest price for a token.
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="tokenAddress" type="string" required>
+  Token contract address to get the price for.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/trade/price/0xTokenAddress?apiKey=YOUR_API_KEY"
+```
+
+---
+
+### GET /api/v0/trade/pricechange/{tokenAddress}
+
+Returns the price change for a token over the last 24 hours.
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="tokenAddress" type="string" required>
+  Token contract address.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/trade/pricechange/0xTokenAddress?apiKey=YOUR_API_KEY"
+```
+
+---
+
+### POST /api/v0/trade/pricechange/{tokenAddress}
+
+Returns the price change over a custom time duration specified in the request body.
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="tokenAddress" type="string" required>
+  Token contract address.
+</ParamField>
+
+<ParamField body="duration" type="object" required>
+  Duration object specifying the timeframe for the price change calculation.
+</ParamField>
+
+#### Example
+
+```bash
+curl -X POST "https://api.fuse.io/api/v0/trade/pricechange/0xTokenAddress?apiKey=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"duration": {"days": 7}}'
+```
+
+---
+
+### GET /api/v0/trade/pricechange/interval/{timeFrame}/{tokenAddress}
+
+Returns the price change for a token over a standard interval.
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="timeFrame" type="string" required>
+  Interval for the price change. Allowed values: `ALL`, `MONTH`, `WEEK`, `DAY`, `HOUR`.
+</ParamField>
+
+<ParamField path="tokenAddress" type="string" required>
+  Token contract address.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/trade/pricechange/interval/DAY/0xTokenAddress?apiKey=YOUR_API_KEY"
+```
+
+---
+
+### GET /api/v0/trade/stats/{tokenAddress}
+
+Returns historical price statistics for a token.
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField path="tokenAddress" type="string" required>
+  Token contract address.
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Number of historical data points to return.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v0/trade/stats/0xTokenAddress?apiKey=YOUR_API_KEY&limit=30"
+```
+
+---
+
+## V2 Endpoints
+
+### GET /api/v1/trade/price
+
+Returns an indicative price for a token swap. This is a non-binding quote suitable for displaying estimated prices to users before they commit to a transaction.
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="sellToken" type="string" required>
+  The ERC20 token contract address of the token you want to sell.
+</ParamField>
+
+<ParamField query="buyToken" type="string" required>
+  The ERC20 token contract address of the token you want to receive.
+</ParamField>
+
+<ParamField query="sellAmount" type="string">
+  The amount of `sellToken` to sell, in base units (before decimals). Either `sellAmount` or `buyAmount` must be provided.
+</ParamField>
+
+<ParamField query="buyAmount" type="string">
+  The amount of `buyToken` to receive, in base units. Either `sellAmount` or `buyAmount` must be provided.
+</ParamField>
+
+<ParamField query="slippagePercentage" type="string">
+  Maximum acceptable slippage as a decimal fraction (e.g., `0.01` for 1%).
+</ParamField>
+
+<ParamField query="gasPrice" type="string">
+  Target gas price for the swap transaction in wei.
+</ParamField>
+
+<ParamField query="takerAddress" type="string">
+  The address that will fill the quote. Used for validation.
+</ParamField>
+
+<ParamField query="excludedSources" type="string">
+  Comma-separated list of liquidity sources to exclude.
+</ParamField>
+
+<ParamField query="includedSources" type="string">
+  Comma-separated list of liquidity sources to include.
+</ParamField>
+
+<ParamField query="skipValidation" type="boolean">
+  When `true`, skips on-chain validation of the quote. Default: `false`.
+</ParamField>
+
+<ParamField query="feeRecipient" type="string">
+  Address that should receive affiliate fees.
+</ParamField>
+
+<ParamField query="buyTokenPercentageFee" type="string">
+  Percentage of the `buyAmount` attributed as an affiliate fee (e.g., `0.01` for 1%).
+</ParamField>
+
+<ParamField query="enableSlippageProtection" type="boolean">
+  Enable slippage protection. Default: `true`.
+</ParamField>
+
+<ParamField query="priceImpactProtectionPercentage" type="string">
+  Maximum acceptable price impact as a decimal fraction.
+</ParamField>
+
+<ParamField query="feeRecipientTradeSurplus" type="string">
+  Address that receives any trade surplus fee.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v1/trade/price?apiKey=YOUR_API_KEY&sellToken=0xSellToken&buyToken=0xBuyToken&sellAmount=1000000000000000000"
+```
+
+---
+
+### GET /api/v1/trade/quote
+
+Returns a firm quote for buying or selling an ERC20 token. Unlike `/price`, a quote includes the calldata needed to submit the swap transaction on-chain.
+
+Accepts all the same parameters as `GET /api/v1/trade/price`, plus:
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+<ParamField query="sellToken" type="string" required>
+  Token contract address of the token to sell.
+</ParamField>
+
+<ParamField query="buyToken" type="string" required>
+  Token contract address of the token to receive.
+</ParamField>
+
+<ParamField query="sellAmount" type="string">
+  Sell amount in base units. Provide either `sellAmount` or `buyAmount`.
+</ParamField>
+
+<ParamField query="buyAmount" type="string">
+  Buy amount in base units.
+</ParamField>
+
+<ParamField query="takerAddress" type="string">
+  The address that will submit the swap transaction. Required for on-chain validation.
+</ParamField>
+
+<ParamField query="shouldSellEntireBalance" type="boolean">
+  When `true`, sells the entire available `sellToken` balance of the `takerAddress`.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v1/trade/quote?apiKey=YOUR_API_KEY&sellToken=0xSellToken&buyToken=0xBuyToken&sellAmount=1000000000000000000&takerAddress=0xYourAddress"
+```
+
+---
+
+### GET /api/v1/trade/sources
+
+Returns the list of liquidity sources enabled for Fuse Network. Use the source names in `excludedSources` or `includedSources` parameters of the price and quote endpoints.
+
+<ParamField query="apiKey" type="string" required>
+  Your public API key.
+</ParamField>
+
+#### Example
+
+```bash
+curl "https://api.fuse.io/api/v1/trade/sources?apiKey=YOUR_API_KEY"
+```
+
+---
+
+## Error responses
+
+| Status | Meaning |
+|---|---|
+| 400 | Bad Request — invalid or missing parameters |
+| 401 | Unauthorized — missing or invalid API key |

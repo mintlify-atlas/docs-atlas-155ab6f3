@@ -1,28 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Fuse",
+  "projectType": "saas",
+  "projectName": "Fuse",
+  "projectDescription": "Fuse is an Ethereum-compatible blockchain platform for businesses and developers, offering account abstraction, a comprehensive SDK, and powerful APIs for building gasless payment and Web3 applications.",
   "theme": "luma",
-  "colors": {
-    "primary": "#040404",
-    "light": "#b2f9ba",
-    "dark": "#5b7c5c"
-  },
-  "favicon": "https://media.brand.dev/f8908cd8-d264-46e6-986a-a3b9917ee916.svg",
-  "logo": {
-    "light": "https://media.brand.dev/94982485-aa0d-40e6-aded-1c47925f83b2.svg",
-    "dark": "https://media.brand.dev/94982485-aa0d-40e6-aded-1c47925f83b2.svg"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/fuseio/fuse-docs"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/fuseio/fuse-docs"
-    }
-  },
+  "primaryColor": "#040404",
+  "lightColor": "#b2f9ba",
+  "darkColor": "#5b7c5c",
   "navigation": {
     "tabs": [
       {
@@ -123,5 +106,30 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "EVM-compatible blockchain with 5s block times and ~$0.0001 transaction fees",
+    "FuseBox Wallet-as-a-Service based on ERC-4337 account abstraction",
+    "Gasless transactions via Paymaster sponsorship",
+    "TypeScript and Flutter/Dart SDKs for easy blockchain integration",
+    "REST APIs: Smart Wallet, Balances, Trade, Notification, Explorer, Staking, GraphQL",
+    "Fuse AI agentic payments infrastructure (x402, MPP, ACP, ERC-8183)",
+    "Delegated Proof of Stake (DPoS) consensus with on-chain governance",
+    "Charge: no-code crypto payments platform for merchants"
+  ],
+  "publicApiSurface": [
+    "FuseSDK.init(apiKey, credentials, options)",
+    "fuseSDK.wallet.getSender()",
+    "fuseSDK.transferToken(tokenAddress, recipient, amount)",
+    "fuseSDK.swapTokens(params)",
+    "fuseSDK.transferNFT(params)",
+    "fuseSDK.stakingModule.stake(params)",
+    "fuseSDK.stakingModule.unstake(params)",
+    "GET /v0/balances/{address}",
+    "GET /v0/trade/price",
+    "POST /v0/smart-wallets",
+    "GET /v0/notifications",
+    "GET /v1/explorer/transactions",
+    "GET /v1/staking/options"
+  ]
 }

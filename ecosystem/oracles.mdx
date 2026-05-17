@@ -1,0 +1,91 @@
+---
+title: "Price oracles on Fuse Network"
+description: "Oracle integrations on Fuse Network including SupraOracles and DIA, with deployed contract addresses and guidance for using price feeds in smart contracts."
+---
+
+Blockchain oracles are third-party services that deliver external data to smart contracts. Because smart contracts cannot directly query off-chain sources, oracles act as trusted intermediaries that fetch, verify, and post real-world data—such as asset prices, random numbers, or off-chain event outcomes—onto the blockchain.
+
+Fuse Network supports multiple oracle providers. Each provides different guarantees around data sourcing, update frequency, and verification methodology.
+
+## SupraOracles
+
+[Supra](https://supra.com) is a high-throughput oracle and IntraLayer platform offering cross-chain solutions including data oracles, asset bridges, and automation networks. Supra's distributed Verifiable Random Function (dVRF) solution provides cryptographically secure, low-latency randomness for use cases such as NFT minting, on-chain lotteries, and blockchain gaming.
+
+Supra's dVRF design uses a novel Non-Interactive Distributed Key Generation (NI-DKG) scheme. The dVRF paper was accepted into ACM CCS 2023.
+
+### Supra contracts on Fuse
+
+The following Supra smart contracts are deployed on Fuse mainnet:
+
+| Contract | Address | Version |
+|---|---|---|
+| Supra Router Contract | [0x1daB558F090029580854FbCF8f83ef3Ad8C223b5](https://explorer.fuse.io/address/0x1daB558F090029580854FbCF8f83ef3Ad8C223b5) | V2 |
+| Supra Deposit Contract | [0x7a168e3AE8B701648D4f8F89B5fCD278885eBeFA](https://explorer.fuse.io/address/0x7a168e3AE8B701648D4f8F89B5fCD278885eBeFA) | V2 |
+
+### Using Supra in a smart contract
+
+To consume a Supra price feed, call the Router Contract. The interface below shows how to request and read a price pair.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface ISupraSValueFeed {
+    function getSvalue(uint64 _pairIndex)
+        external
+        view
+        returns (bytes32, bool);
+}
+
+contract SupraPriceConsumer {
+    ISupraSValueFeed internal sValueFeed;
+
+    constructor() {
+        // Supra Router Contract on Fuse mainnet
+        sValueFeed = ISupraSValueFeed(0x1daB558F090029580854FbCF8f83ef3Ad8C223b5);
+    }
+
+    function getPrice(uint64 pairIndex)
+        external
+        view
+        returns (bytes32 price, bool isDecimal)
+    {
+        return sValueFeed.getSvalue(pairIndex);
+    }
+}
+```
+
+For full documentation on pair indices and advanced features, see the [Supra developer docs](https://supra.com/docs/overview/).
+
+## DIA
+
+[DIA](https://www.diadata.org/) is a cross-chain, trustless oracle network that delivers verifiable price feeds for Fuse. DIA sources raw trade data directly from primary markets—more than 100 CEXs and DEXs—and computes prices on-chain, providing complete transparency from source to destination smart contract.
+
+### Key features
+
+- Complete verifiability from data source to destination contract
+- Direct sourcing from 100+ primary markets with no intermediary
+- Support for 20,000+ assets across all major asset classes
+- Custom oracle configuration with tailored data sources and methodologies
+
+### Data products
+
+| Product | Description |
+|---|---|
+| Token Price Feeds | Real-time market prices for assets across CEXs and DEXs |
+| Fundamental Feeds | Fair value pricing, NAV, and Proof of Reserve data |
+| RWA Feeds | Equities, FX rates, commodities, and ETF prices |
+| Randomness | Verifiable random number generation |
+
+### Getting started with DIA
+
+- [How DIA oracles work on Fuse](https://www.diadata.org/docs/guides/chain-specific-guide/fuse)
+- [Request a custom oracle](https://www.diadata.org/docs/guides/how-to-guides/request-a-custom-oracle)
+
+## Chainlink
+
+Chainlink data feeds support for Fuse Network is planned. Check the [Fuse ecosystem page](https://www.fuse.io/ecosystem) for updates.
+
+<Info>
+  When choosing an oracle for production use, consider update frequency, data sources, deviation thresholds, and whether the feed covers the exact asset pair you need. Both Supra and DIA support custom configurations for specific requirements.
+</Info>
